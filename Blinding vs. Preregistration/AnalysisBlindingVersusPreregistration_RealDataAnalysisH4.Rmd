@@ -1,0 +1,124 @@
+---
+title: "Analysis Blinding Versus Preregistration - H4"
+output: html_document
+---
+
+## Analysis conducted on the unblinded version of the data
+ 
+Hypothesis 4: Analysis teams in the preregistration condition should(1) deviate more often from their planned analysis than analysis teams in the blinding condition and (2) when they deviate from their analysis plan, analysis teams in the preregistration condition should deviate on more items than analysis teams in the blinding condition. We will test this hypothesis against the null hypothesis that both groups (1) deviate the same number of times from their analysis plan and (2) when they deviate from their analysis plan they do so for the same number of items.
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rethinking)
+library(bridgesampling)
+library(rstan)
+library(bayesplot)
+fixed_seed <- 2021 # set seed for reproducibility purposes
+
+```
+
+```{r data}
+datafile <- 'data/data_prereg_blinding_unblinded.csv' # specify correct path
+dat <- read.csv(file = datafile, header=T)
+```
+
+## Stan Model
+
+```{r stanmodel, message=FALSE, warning=FALSE, results='hide'}
+dat$cond <- as.numeric(as.factor(dat$condition)) - 1
+datalist <- list(N = nrow(dat), 
+                 y = dat$deviation_count)
+  
+m0 <- rstan::stan(file ="h4_m0.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+datalist <- list(N = nrow(dat),
+                 y = dat$deviation_count,
+                 x = dat$cond)
+m1 <- rstan::stan(file ="h4_m1.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+# bridge sampling Bayes factor
+set.seed(fixed_seed)
+m0_bridge <- bridgesampling::bridge_sampler(m0, seed = fixed_seed)
+set.seed(fixed_seed)
+m1_bridge <- bridgesampling::bridge_sampler(m1, seed = fixed_seed)
+bf_e0 <- bridgesampling::bf(m1_bridge, m0_bridge)
+```
+
+
+```{r output}
+# unconditional encompassing method Bayes factor
+samp <- rstan::extract(m1)
+post <- mean(samp$bp<0 & samp$bl>0)
+prior <- 0.5^2
+bf_re <- post/prior 
+
+bf_r0 <- bf_e0$bf * bf_re
+```
+
+## Results 
+
+```{r results}
+bf_r0
+sum(dat$deviation_count[dat$condition == 'blinding'] == 0)
+sum(dat$deviation_count[dat$condition == 'preregistration'] == 0)
+
+p_nodeviation_prereg <- logistic(median(samp[['ap']]) + median(samp[['bp']])) 
+p_nodeviation_blinding <- logistic(median(samp[['ap']])) 
+lambda_deviations_prereg <- exp(median(samp[['al']]) + median(samp[['bl']])) 
+lambda_deviations_blinding <- exp(median(samp[['al']])) 
+```
+
+### Descriptives ###
+
+```{r descriptives}
+# proportion deviation in preregistration condition
+mean(dat[dat$condition=='preregistration',]$deviation_count > 0)
+# proportion deviation in blinding condition
+mean(dat[dat$condition=='blinding',]$deviation_count > 0)
+# average number of deviations when deviated in preregistration condition
+# estimate includes possibility that teams report 0 deviations
+mean(dat$deviation_count[dat$condition=='preregistration' & dat$deviation_count > 0])
+# average number of deviations when deviated in blinding condition
+# estimate includes possibility that teams report 0 deviations
+mean(dat$deviation_count[dat$condition=='blinding' & dat$deviation_count > 0])
+
+### Model Estimates ###
+# probability of deviation in preregistration condition
+round(1 - (p_nodeviation_prereg + (1 - p_nodeviation_prereg)*exp(-lambda_deviations_prereg)), 2)
+# probability of deviation in blinding condition
+round(1 - (p_nodeviation_blinding + (1 - p_nodeviation_blinding)*exp(-lambda_deviations_blinding)), 2)
+  
+```
+
+```{r traceplots}
+mcmc_trace(m1, pars = c("ap","al","bp","bl"))
+```
+
+## Robustness Check
+
+```{r robustbridge, message=FALSE, warning=FALSE, results='hide'}
+set.seed(fixed_seed)
+m0_bridge2 <- bridgesampling::bridge_sampler(m0, seed = fixed_seed, repetitions=20)
+set.seed(fixed_seed)
+m1_bridge2 <- bridgesampling::bridge_sampler(m1, seed = fixed_seed, repetitions=20)
+bf2_e0 <- bridgesampling::bf(m1_bridge2, m0_bridge2)
+```
+
+```{r robustoutput}
+bf2_r0 <- bf2_e0$bf * bf_re
+bf2_r0
+```
+
+
+

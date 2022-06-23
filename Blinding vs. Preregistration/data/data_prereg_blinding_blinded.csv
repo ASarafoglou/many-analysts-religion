@@ -1,0 +1,139 @@
+"","condition","work","effort","frustration","time_anticipated","deviation_count","HoursS1","HoursS2","EffortS1","EffortS2","FrustrationS1","FrustrationS2","TimeAnticipatedS1","TimeAnticipatedS2","DeviateHypotheses","DeviateVariables","DeviateDV","DeviateExclusions","DeviateModel","DeviateDirection","DeviateTest","DeviateIV","DeviateWhy","NumberOfPeople","Domain","Positions","TheoreticalKnowledge","MethodsKnowledge"
+"3","preregistration",46,9,4,8,0,40,6,5,4,2,2,5,3,0,0,0,0,0,0,0,0,"",5,"Psychology (Other)","Doctoral student, Assistant professor, Associate professor",2,4
+"4","blinding",NA,NA,NA,NA,0,NA,30,NA,7,NA,5,NA,5,0,0,0,0,0,0,0,0,"",1,"Cognition","Associate professor",3,5
+"5","preregistration",70,11,6,7,0,30,40,5,6,3,3,4,3,0,0,0,0,0,0,0,0,"",6,"Religion and Culture","Doctoral student, Post-doc, Full professor",4,4
+"6","preregistration",17,9,9,5,0,12,5,4,5,5,4,2,3,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Full professor",5,5
+"7","preregistration",9,7,5,6,0,2,7,2,5,1,4,3,3,0,0,0,0,0,0,0,0,"",2,"Cognition; Social Psychology","Doctoral student, Associate professor",5,5
+"8","preregistration",100,12,5,7,1,20,80,6,6,1,4,3,4,0,0,0,0,0,0,0,1,"We included further data transformations and model specifications",3,"Religion and Culture","Doctoral student, Associate professor",3,4
+"9","preregistration",9,7,2,6,0,2,7,3,4,1,1,3,3,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Assistant professor",4,4
+"10","preregistration",12,9,8,6,1,4,8,4,5,5,3,3,3,0,0,0,1,0,0,0,0,"Had difficulty running the models with missing data imputed, so instead deleted cases with missing data before computing the models. Given the large sample size and small proportion of missing data this seemed reasonable.",1,"Psychology (Other)","Associate professor",2,3
+"11","preregistration",20,7,5,6,0,10,10,3,4,2,3,3,3,0,0,0,0,0,0,0,0,"",1,"Cognition","Post-doc",1,3
+"12","preregistration",13,8,8,8,0,7,6,4,4,1,7,3,5,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Post-doc, Associate professor",2,3
+"13","blinding",35,11,12,5,0,30,5,6,5,5,7,2,3,0,0,0,0,0,0,0,0,"",1,"Health","Post-doc, Assistant professor",1,3
+"14","blinding",48,11,10,8,0,12,36,5,6,6,4,4,4,0,0,0,0,0,0,0,0,"",1,"Cognition","Doctoral student",1,4
+"16","preregistration",50,11,9,6,0,30,20,6,5,5,4,4,2,0,0,0,0,0,0,0,0,"",2,"Religion and Culture; Social Psychology","Doctoral student, Post-doc",5,4
+"19","preregistration",10,10,6,7,1,5,5,5,5,3,3,3,4,0,0,0,1,0,0,0,0,"did not exclude outliers for age based on outlier analyses",1,"Health","Doctoral student",3,4
+"20","blinding",10,8,5,8,0,5,5,3,5,3,2,4,4,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Associate professor",4,5
+"21","blinding",28,9,8,6,0,12,16,6,3,4,4,3,3,0,0,0,0,0,0,0,0,"",2,"Psychology (Other)","Post-doc, Associate professor",2,4
+"23","preregistration",20,10,10,6,0,12,8,6,4,5,5,3,3,0,0,0,0,0,0,0,0,"",1,"Cognition","Post-doc",2,4
+"24","blinding",20,7,4,6,0,16,4,4,3,2,2,4,2,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics","Doctoral student",3,4
+"25","blinding",13,12,8,7,0,5,8,6,6,4,4,3,4,0,0,0,0,0,0,0,0,"",1,"Social Psychology; Methodology and Statistics","Post-doc",3,4
+"26","blinding",19,11,8,7,0,7,12,6,5,4,4,3,4,0,0,0,0,0,0,0,0,"",7,"Religion and Culture","Doctoral student, Post-doc, Assistant professor, Associate professor, Full professor",4,4
+"28","blinding",34,11,10,8,2,28,6,6,5,5,5,4,4,0,1,0,0,1,0,0,0,"We realised that we were trying to explain the data instead of answering the question, and actually the 'new' analysis is one we discussed in our meetings for MARP (linear mixed effects model), but not one we wrote up. It was a very chaotic time in late 2020 when we had to write it all up and I think all of the team members were overwhelmed, but we really wanted to be involved in the project. ",4,"Social Psychology; Cognition","Doctoral student, Post-doc, Associate professor",5,5
+"29","blinding",8,6,2,6,0,4,4,3,3,1,1,3,3,0,0,0,0,0,0,0,0,"",4,"Religion and Culture","Post-doc, Associate professor",2,4
+"30","preregistration",18,12,10,6,0,8,10,6,6,5,5,3,3,0,0,0,0,0,0,0,0,"",1,"Cognition","Doctoral student",1,2
+"31","blinding",16,9,11,6,0,8,8,5,4,6,5,3,3,0,0,0,0,0,0,0,0,"",1,"Psychology (Other)","Doctoral student",1,2
+"32","blinding",14,11,11,9,3,6,8,5,6,5,6,4,5,0,1,1,0,0,0,0,1,"I made three modifications to my original syntax: (1) I removed any variables from a scale if they did not improve the reliability of that scale. This was a planned modification that was explained in my original syntax. (2) I modified the syntax to provide a confidence interval for the standardized regression coefficients (beta). To obtain a confidence interval for the standardized regression coefficients, I also standardized all of the variables that were used in the regression models. (3) I added Overall Well-Being as a dependent variable. Originally, I planned to analyze the effects of personal religiosity on Physical Well-Being, Psychological Well-Being, and Social Well-Being separately. I did not plan to analyze Overall Well-Being, as I hypothesized that religiosity may not have the same impact on different types of well-being. However, as each analysis team was only allowed to provide one numerical estimate of the impact of personal religiosity on well-being (not 3 estimates taken from 3 different regressions), I added the necessary analyses to examine the effects of personal religiosity on Overall Well-Being. ",1,"Psychology (Other)","Assistant professor",4,4
+"35","blinding",11,9,9,9,2,5,6,5,4,5,4,5,4,0,0,0,1,0,0,1,0,"As specified in the file uploaded to the OSF folder, we conducted not pre-registered post-hoc analyses using the Tukey method to further test Hypothesis 1. Moreover, we had pre-registered that “as there are no missing data on well-being, religiosity and perceived cultural norms, missing data will not be an issue”, but we observed that one of the variables assessing well-being (“wb_soc_3”) had 995 missing cases. These cases were thus deleted through the listwise method. These were the deviations from pre-registration.",2,"Social Psychology ","Doctoral student, Associate professor",2,5
+"36","preregistration",18,10,7,7,0,8,10,4,6,4,3,4,3,0,0,0,0,0,0,0,0,"",4,"Cognition; Religion and Culture; Social Psychology","Post-doc, Full professor",3,3
+"37","preregistration",23,7,3,7,0,22,1,4,3,2,1,4,3,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics; Cognition","Post-doc, Assistant professor, Associate professor",1,5
+"38","preregistration",46,9,6,7,0,35,11,6,3,4,2,4,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Doctoral student, Assistant professor",2,4
+"39","preregistration",8,11,7,7,0,5,3,6,5,6,1,4,3,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Assistant professor",2,4
+"40","preregistration",7,4,5,5,0,6,1,3,1,4,1,3,2,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Assistant professor",2,4
+"41","blinding",9,6,3,5,0,6,3,3,3,2,1,2,3,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Full professor",3,5
+"42","preregistration",9,10,4,6,0,3,6,5,5,2,2,3,3,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Doctoral student",2,4
+"43","preregistration",38,11,6,7,2,8,30,5,6,1,5,3,4,0,0,1,0,0,0,0,1,"In our preregistration we mistakenly took the predicted variable (mental well-being) for the predictor (religiosity). As is clear from our research question, we investigated whether religiosity predicted mental well-being. Therefore, the analyses were conducted with religiosity as predictor and mental well-being is the dependent (or outcome) variable. Also, we preregistered to check for normal distribution of our dependent and independent variables. However, this is not a requirement for a regression analysis. Therefore, we did not check this assumption.",2,"Cognition","Assistant professor",1,4
+"44","blinding",4,9,3,6,0,2,2,5,4,1,2,3,3,0,0,0,0,0,0,0,0,"",1,"Health; Religion and Culture","Associate professor",4,4
+"45","preregistration",7,5,5,4,0,6,1,3,2,3,2,2,2,0,0,0,0,0,0,0,0,"",1,"Cognition","Assistant professor",2,4
+"47","blinding",10,7,3,6,0,5,5,4,3,1,2,3,3,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Doctoral student, Assistant professor",4,5
+"48","preregistration",8,7,8,7,0,4,4,4,3,4,4,3,4,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Post-doc",3,4
+"49","preregistration",7,6,4,5,0,2,5,3,3,2,2,3,2,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Associate professor",5,5
+"51","preregistration",20,9,9,7,1,7,13,4,5,4,5,3,4,0,0,0,0,0,0,0,1,"We initially operationalized religiosity by generating two separate indices of religious participation and importance. After learning from project coordinators that we could only report one effect size per research question, we decided to combine our two separate indices of religiosity into one index (a combination of both participation and importance).  ",2,"Social Psychology","Associate professor",1,3
+"52","preregistration",75,11,11,8,0,32.5,42.5,5,6,4,7,4,4,0,0,0,0,0,0,0,0,"",4,"Social Psychology; Psychology (Other)","Doctoral student, Full professor",1,3
+"53","preregistration",26,10,4,6,0,16,10,5,5,2,2,3,3,0,0,0,0,0,0,0,0,"",2,"Psychology (Other)","Doctoral student, Associate professor",1,4
+"54","preregistration",4,NA,4,5,0,3,1,NA,3,2,2,3,2,0,0,0,0,0,0,0,0,"",3,"Religion and Culture; Cognition","Doctoral student, Assistant professor, Full professor",5,5
+"55","preregistration",16,10,8,8,3,8,8,5,5,3,5,4,4,0,1,0,0,1,0,1,0,"I reinterpreted the second research question. At first I thought there was a multi-level component. However, once I really started to think about the question and look at the variables, I realized this was just a ""level 1"" question. But who knows, I may of outsmarted my own outsmarting...",1,"Social Psychology","",2,3
+"56","blinding",23,10,9,6,1,8,15,5,5,3,6,3,3,0,0,0,0,0,0,1,0,"Factor analyses did not fit",5,"Health; Psychology (Other)","Doctoral student, Assistant professor, Full professor",4,4
+"57","preregistration",11,6,5,6,1,6,5,3,3,4,1,3,3,0,1,0,0,0,0,0,0,"We deviated from the pre-registration in two ways: we recoded the ethnicity item and dropped the type of compensation as a predictor in the model. Ethnicity was collapsed into the following levels to ensure that each level had an acceptable sample size, did not overlap with other categories, and was not conflated with nationality: Caucasian/European, Asian, Middle Eastern/Arab, African, Indigenous, Latin American, Mixed/Other, and Rather not say. Type of compensation was dropped from the model due to collinearity with other variables in the model that created convergence issues.",3,"Social Psychology","Doctoral student, Full professor",3,5
+"58","blinding",144,12,8,8,0,72,72,6,6,5,3,4,4,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Assistant professor",3,3
+"59","preregistration",40,10,6,8,0,20,20,5,5,4,2,4,4,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Post-doc",4,3
+"60","preregistration",50,11,9,7,3,10,40,5,6,4,5,3,4,0,0,1,0,1,0,0,1,"* Misinterpreted comment about missing values in data documentation
+* Accidentally put both the original variable ethicity and the derived variable ""majority"" in the analysis; removed these
+* Tried using ESTIMATOR = BAYES for main models because integration did not converge
+* Removed categorical items, because no DIC is available for cat outcomes http://www.statmodel.com/discussion/messages/9/6256.html?1600907976
+* DIC is not available for latent variable interactions, thus it is not possible to determine best fitting model according to preregistration
+* Decided to conduct path analysis with mean score scales of the observed variables to determine best fitting model, then revert back to Bayes for estimation of the final model
+* Final model does not converge with Bayes; decided to use path analysis with mean scores for all analyses",1,"Methodology and Statistics","Assistant professor",1,5
+"63","preregistration",30.5,8,6,7,1,25,5.5,5,3,4,2,4,3,0,0,0,0,1,0,0,0,"I did not deviate from the Stage 1 analysis plan itself. However, there were models that converged in Stage 1 but not in Stage 2, so I had to put the optimizer line for some of them to converge. Likewise, there were models that I had the optimizer line in Stage 1 that no longer needed it in Stage 2.
+Also, I had centered the predictor variables in Stage 1 but didn't realize I needed to report the betas, so I added a few lines for each model to make sure that I had the standardized coefficients and their CIs. I emailed the MARP team shortly after uploading Stage 1 about this before seeing the real data, and Alexandra instructed me to note this in the survey.",1,"Social Psychology","Doctoral student",3,3
+"64","blinding",41,9,6,6,2,6,35,4,5,1,5,2,4,0,0,0,0,1,0,1,0,"Model misspecification, nuances in the software",1,"Religion and Culture","Post-doc",4,4
+"65","preregistration",3,4,7,5,1,1,2,1,3,5,2,2,3,0,0,0,1,0,0,0,0,"I did not see the point of dropping 3 participants for having outliers (in name only) from a dataset of over 10,000 participants",1,"Social Psychology","Assistant professor",2,4
+"67","preregistration",13,11,4,8,0,7,6,5,6,2,2,4,4,0,0,0,0,0,0,0,0,"",6,"Social Psychology","Doctoral student,  Associate professor,  Full professor",4,4
+"68","blinding",13,5,4,5,0,3,10,3,2,2,2,2,3,0,0,0,0,0,0,0,0,"",1,"Psychology (Other); Social Psychology","Post-doc",1,5
+"69","blinding",21,8,5,6,1,12,9,4,4,1,4,3,3,0,0,0,0,0,0,0,0,"We forgot to request confidence intervals and to calculate new interaction terms for checking simple slopes.",2,"Social Psychology","Doctoral student, Full professor",3,4
+"70","blinding",20,10,8,8,1,10,10,5,5,6,2,4,4,0,0,0,1,0,0,0,0,"1. Misunderstanding of the coding of the attention check item (0 = fail as in the preregistration vs 1 – 5 as in the data, 1 = pass)
+2. Non-normality of the residuals, so we had to transform the data, which was also not preregistered",2,"Cognition","Doctoral student, Post-doc",1,4
+"71","preregistration",32,7,4,6,0,20,12,3,4,2,2,3,3,0,0,0,0,0,0,0,0,"",4,"Cognition; Health","Assistant professor,  Full professor",3,4
+"72","blinding",9,10,2,6,0,6,3,5,5,1,1,3,3,0,0,0,0,0,0,0,0,"",2,"Cognition","Post-doc, Assistant professor",2,4
+"74","blinding",6,7,5,7,0,2,4,2,5,2,3,3,4,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Assistant professor",5,5
+"75","blinding",50,10,6,6,0,40,10,5,5,2,4,3,3,0,0,0,0,0,0,0,0,"",3,"Cognition","Doctoral student, Assistant professor",2,4
+"76","blinding",23,9,5.5,6.5,1,15,8,5,4,2.5,3,3.5,3,0,1,0,0,0,0,0,0,"We experienced convergence errors and made the following changes in our analysis compared to our preregistration:
+-	We removed gdp as a covariate since it lead to convergence errors.
+-	 We fixed the factor loadings for our 2-indicator latent variables instead of their covariances as planned. 
+",2,"Methodology and Statistics; Religion and Culture","Doctoral student",2,4
+"78","blinding",15,7,5,6,0,7,8,3,4,3,2,3,3,0,0,0,0,0,0,0,0,"",2,"Religion and Culture","Post-doc",5,3
+"79","blinding",7,8,2,8,0,3,4,4,4,1,1,4,4,0,0,0,0,0,0,0,0,"",1,"Health","Full professor",2,4
+"80","blinding",48,10,6,7,1,8,40,5,5,3,3,3,4,0,0,0,0,0,0,1,0,"We failed to realize that religiosity items were already standardized. Model misspecification (one of our operationalizations of religiosity was perfectly correlated with cultural norms of religion, so we were unable to complete the regression). Statistical test - ANOVA/MANOVA did not allow for poc-hoc Tukey tests. All deviations from the preregistration are detailed in the results summary.",3,"Social Psychology","Doctoral student, Associate professor",3,5
+"81","blinding",44,12,8,8,2,12,32,6,6,5,3,4,4,0,0,0,0,1,0,0,1,"We neglected to clearly specify what we think is the best analytic approach, failing to mention cluster-mean-centering and random slopes for country. Basically we didn't do a good enough job with our preregistration. I think this would have been avoided if we'd had a sample of real or simulated data to use when doing our pre-registration. However, we did include the exact analyses as pre-registered in our code, and it does not make a huge difference in conclusions.",3,"Psychology (Other); Social Psychology","Doctoral student, Associate professor",2,4
+"82","preregistration",20,8,3,6,0,12,8,6,2,2,1,4,2,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Doctoral student, Post-doc",1,5
+"83","blinding",3,4,3,6,0,2,1,2,2,1,2,3,3,0,0,0,0,0,0,0,0,"",2,"Social Psychology; Religion and Culture","Post-doc, Assistant professor",5,5
+"90","preregistration",5.5,10,3,6,1,2.5,3,5,5,1,2,3,3,0,0,0,0,0,0,0,1,"I thought the scores were not reverse-coded already in the dataset, so I wrote I will do that for one item (but in fact I don't need to). Also I did not know I will need to report only one effect size for one research question, I thought using individual items (different aspects of religiosity) would make the effect's meaning more specific. So I end up averaging them after making sure that they are highly correlated. Conceptually this is similar to the effect I am trying to test. I did also looked at the individual items' effects, and they are very similar. Averaging will not make the results any different.",1,"Social Psychology","Doctoral student",2,3
+"91","blinding",122,10,6,7,0,50,72,5,5,2,4,4,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Doctoral student",2,4
+"92","preregistration",30,11,8,6,0,10,20,5,6,5,3,3,3,0,0,0,0,0,0,0,0,"",1,"Health; Methodology and Statistics","",2,4
+"94","preregistration",10,5,3,4,0,7,3,3,2,2,1,2,2,0,0,0,0,0,0,0,0,"",4,"Psychology (Other); Social Psychology","Post-doc, Doctoral student",2,4
+"95","blinding",21,8,5,8,0,19,2,6,2,4,1,5,3,0,0,0,0,0,0,0,0,"",3,"Social Psychology","Doctoral student, Post-doc",4,4
+"96","preregistration",20,11,6,6,0,8,12,6,5,3,3,3,3,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics","Assistant professor",2,4
+"97","preregistration",4,7,6,6,0,3,1,5,2,4,2,3,3,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics","Assistant professor",2,5
+"98","blinding",3,7,4,6,0,1.5,1.5,3,4,2,2,3,3,0,0,0,0,0,0,0,0,"",1,"Cognition","Assistant professor",2,4
+"100","blinding",16,6,3,6,0,6,10,3,3,1,2,3,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Doctoral student",2,5
+"102","blinding",16,11,8,6,0,6,10,5,6,4,4,3,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics; Religion and Culture","Post-doc, Associate professor",4,4
+"103","blinding",10,8,5,5,0,5,5,3,5,2,3,3,2,0,0,0,0,0,0,0,0,"",2,"Social Psychology; Cognition","Post-doc, Assistant professor",4,3
+"104","blinding",16,6,5,5,1,6,10,3,3,2,3,3,2,0,0,0,0,0,0,0,0,"We used a different way to check the homoskedasticity assumption as the bptest() function could not handle lmer objects. Instead, we visually inspected the residual plot to assess homoskedasticity.",2,"Methodology and Statistics","Doctoral student, Post-doc",3,4
+"107","blinding",15,7,7,7,0,8,7,3,4,2,5,3,4,0,0,0,0,0,0,0,0,"",2,"Psychology (Other)","Doctoral student",3,3
+"109","blinding",6,4,2,6,0,3,3,2,2,1,1,3,3,0,0,0,0,0,0,0,0,"",3,"Social Psychology","Post-doc",5,5
+"110","preregistration",24,10,5,7,0,8,16,5,5,4,1,4,3,0,0,0,0,0,0,0,0,"",1,"Religion and Culture","Doctoral student",1,4
+"111","blinding",8,5,6,7,0,4,4,3,2,3,3,3,4,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics; Psychology (Other)","Post-doc",3,4
+"113","preregistration",16,9,2,5,0,13,3,6,3,1,1,4,1,0,0,0,0,0,0,0,0,"",2,"Social Psychology; Methodology and Statistics","Doctoral student, Full professor",1,3
+"114","blinding",15,8,10,6,0,6,9,3,5,4,6,2,4,0,0,0,0,0,0,0,0,"",1,"Health","Post-doc",2,4
+"115","preregistration",21,8,6,6,0,15,6,4,4,3,3,4,2,0,0,0,0,0,0,0,0,"",3,"Cognition","Doctoral student, Post-doc",1,3
+"116","blinding",9,4,3,5,0,4,5,2,2,2,1,3,2,0,0,0,0,0,0,0,0,"",3,"Religion and Culture; Social Psychology","Post-doc",5,5
+"117","blinding",25,8,8,7,1,15,10,5,3,6,2,4,3,0,0,0,0,1,0,0,0,"the fully specified covariance matrix of random effects could not be estimated (probably rank deficient), so we estimated only the diagonal part",4,"Methodology and Statistics; Health","Doctoral student",2,4
+"118","blinding",50,10,4,7,1,30,20,5,5,2,2,3,4,0,0,0,0,1,0,0,0,"We had to change the estimator from WLSMV to DWLS. THis was done as R was not able to compare models with a robust estimator. The DWLS estimator was chosen as WLSMV is
+the robust version of the DWLS estimator.",3,"Psychology (Other)","Post-doc, Assistant professor, Full professor",2,4
+"120","blinding",8,7,4,6,0,5,3,5,2,2,2,3,3,0,0,0,0,0,0,0,0,"",2,"Psychology (Other); Religion and Culture","Doctoral student, Post-doc",3,4
+"123","blinding",17,6,6,8,0,12,5,4,2,4,2,5,3,0,0,0,0,0,0,0,0,"",4,"Cognition","Doctoral student, Post-doc",5,4
+"124","blinding",8.5,7,5,5,0,4.5,4,4,3,2,3,2,3,0,0,0,0,0,0,0,0,"",1,"Social Psychology","Assistant professor",3,4
+"125","blinding",35,8,6,6,0,15,20,2,6,2,4,2,4,0,0,0,0,0,0,0,0,"",3,"Cognition; Social Psychology","Doctoral student",2,4
+"126","preregistration",45,8,3,6,0,25,20,5,3,1,2,4,2,0,0,0,0,0,0,0,0,"",4,"Social Psychology; Health","Full professor",3,5
+"127","preregistration",4,5,8,3,0,2,2,2,3,4,4,1,2,0,0,0,0,0,0,0,0,"",1,"Health","",1,3
+"128","blinding",11,5,5,6,1,9,2,3,2,4,1,3,3,0,0,0,1,0,0,0,0,"Non-sensical/impossible values on age (e.g. 1)",3,"Cognition","Doctoral student, Post-doc",2,4
+"129","preregistration",27,8,8,6,0,24,3,5,3,1,7,3,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Doctoral student",1,5
+"130","preregistration",45,10,9,9,0,25,20,4,6,4,5,4,5,0,0,0,0,0,0,0,0,"",4,"Cognition; Methodology and Statistics","Doctoral student",2,4
+"132","blinding",50,10,8,8,2,20,30,5,5,3,5,4,4,0,1,0,1,0,0,0,0,"Due to the lack of time we tried to get a simpler model. However, the fit was not good.",2,"Methodology and Statistics; Cognition","Doctoral student",1,4
+"133","preregistration",16.5,8,8,6,0,4.5,12,4,4,4,4,3,3,0,0,0,0,0,0,0,0,"",2,"Health","Associate professor",5,5
+"134","preregistration",16.5,6,3,5,1,15,1.5,4,2,2,1,4,1,0,0,0,0,0,0,0,0,"Mixed model did not always converge when bootstrapping confidence intervals, so I changed the optimizer (no effect on results)",1,"Health","Post-doc",3,3
+"135","preregistration",155,13,6,9,2,15,140,6,7,2,4,4,5,0,0,0,1,0,0,0,1,"We realized that there were cases where participants were minors (as young as age 0). We excluded these cases given uncertainties revolving around whether proper consent procedures were in place and/or the reported age was inaccurate.
+
+We also recoded gender into a binary variable where gender was treated as missing for participants who selected ""other.""",2,"Psychology (Other); Social Psychology","Post-doc, Assistant professor",5,4
+"137","blinding",6,7,6,6,0,2,4,3,4,2,4,3,3,0,0,0,0,0,0,0,0,"",2,"Health","Post-doc",3,4
+"138","blinding",95,10,13,9,1,70,25,5,5,7,6,5,4,0,1,0,0,0,0,0,0,"Included all interactions between religiosity variables instead of focused interactions, dropped interactions with GDP. 
+
+We did not further check the model misspecifications. If we were to publish our results as a team, we would probably carefully check the data and models and try to address these. We encountered various error messages while running our models (we did not follow them up).
+
+Importantly, as noted in previous communications, there seem to be problems with the data. We did not carefully check the invariance tests again, but it seems that the relative invariance parameters changed, suggesting problems with the blinding procedure and/or data. ",3,"Religion and Culture; Cognition","Doctoral student, Post-doc, Full professor",4,4
+"140","preregistration",8,9,7,7,1,3,5,5,4,4,3,4,3,0,0,0,0,0,0,1,0,"It turned out the exact combination of estimation settings for the standard errors (Satorra-Bentler correction for non-normality, cluster-robust standard errors, and bootstrapping) was not available in Mplus.",1,"Psychology (Other)","Full professor",1,4
+"144","preregistration",56,10,5,8,1,24,32,5,5,3,2,4,4,0,0,0,1,0,0,0,0,"(1) We excluded participants at age lower than 16. The initial analysis plan assumed that only adult participants had been allowed to participate. Based on the information received from the project leader, we implemented the current exclusion criteria (< 16). (2) We standardized the independent variables. The initial analysis plan consisted of unstandardized regression coefficient. Based on the information received from the project leader, we realized that it was expected to present standardized coefficients (effect size). The current analysis includes standardized regression coefficient. (3) In order improve plotting interaction effect, we modified the initial code by adding a chunk that utilizes emmeans function in R. This change was implemented in order to speed up the analysis; the value use was N - 1 = 10163. The implemented code: emmeans::emm_options(pbkrtest.limit = 10163. (4) For the reproducibility purpose, all analysis were prepared and carried out in R, and then, knitted to an R Markdown document.",2,"Psychology (Other); Cognition","Assistant professor",2,4
+"145","blinding",19,8,7,6,2,3,16,3,5,3,4,3,3,0,1,0,1,0,0,0,0,"I additionally excluded participants from India, as this was a very small group (n = 7) and the only ones identifying with Hinduism. Furthermore, I left out the control variable at country level (gdp) due to difficulties specifying the model ",1,"Religion and Culture; Social Psychology","Post-doc",4,4
+"147","blinding",78,13,7,3,0,48,30,6,7,4,3,2,1,0,0,0,0,0,0,0,0,"",1,"Health","Doctoral student",3,4
+"148","preregistration",80,14,6,8,0,30,50,7,7,4,2,3,5,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Doctoral student",4,4
+"149","preregistration",120,13,9,8,1,60,60,6,7,4,5,4,4,0,0,0,0,0,0,0,0,"We realized we needed to provide standardized Betas, so we used a z-score calculation before running our analyses, which is included in the final syntax. We communicated with the organizers prior to this deviation.",3,"Health; Social Psychology","Associate professor, Full professor",4,4
+"150","blinding",33,11,5,6,0,18,15,6,5,3,2,3,3,0,0,0,0,0,0,0,0,"",2,"Social Psychology; Religion and Culture","Doctoral student, Associate professor",3,4
+"151","blinding",48,11,3,6,0,8,40,5,6,2,1,3,3,0,0,0,0,0,0,0,0,"",5,"Religion and Culture","Assistant professor",4,4
+"152","blinding",160,12,6,8,0,80,80,6,6,3,3,4,4,0,0,0,0,0,0,0,0,"",2,"Psychology (Other); Methodology and Statistics","Doctoral student, Post-doc",2,4
+"153","preregistration",18,5,2,4,0,8,10,2,3,1,1,1,3,0,0,0,0,0,0,0,0,"",2,"Methodology and Statistics","Post-doc",1,3
+"154","preregistration",NA,NA,NA,NA,0,NA,0.5,NA,1,NA,1,NA,1,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics","Full professor",2,5
+"155","preregistration",25,8,5,5,0,5,20,4,4,3,2,2,3,0,0,0,0,0,0,0,0,"",2,"Cognition","Post-doc, Associate professor",1,5
+"156","preregistration",7,5,5,6,0,3,4,3,2,3,2,3,3,0,0,0,0,0,0,0,0,"",4,"Health","",2,4
+"157","preregistration",18,9,5,6,0,15,3,5,4,3,2,3,3,0,0,0,0,0,0,0,0,"",2,"Social Psychology","Doctoral student",3,4
+"158","preregistration",10,9,6,7,3,4,6,6,3,5,1,4,3,0,1,0,1,0,0,0,1,"My analysis plan was not complete with respect to the data. I was unable to compute BF on time as well.",1,"Methodology and Statistics","",2,4
+"159","blinding",24,5,3,7,0,22,2,4,1,2,1,4,3,0,0,0,0,0,0,0,0,"",1,"Methodology and Statistics; Cognition","Post-doc, Assistant professor, Associate professor",1,5

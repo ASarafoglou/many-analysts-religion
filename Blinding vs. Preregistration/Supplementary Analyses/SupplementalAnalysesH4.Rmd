@@ -1,0 +1,286 @@
+---
+title             : "Analysis Blinding Versus Preregistration - Supplements H4"
+shorttitle        : "Title"
+
+author: 
+  - name          : "Alexandra Sarafoglou"
+  - name          : "Suzanne Hoogeveen"
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+keep_tex          : true
+---
+
+```{r setup,eval=TRUE, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(rethinking)
+library(bridgesampling)
+library(rstan)
+library(bayesplot)
+library(dplyr)
+library(irr)
+library(papaja)
+fixed_seed <- 2021 # set seed for reproducibility purposes
+```
+
+```{r data}
+datafile <- '../data/data_prereg_blinding_unblinded.csv' # specify correct path
+dat <- read.csv(file = datafile, header=T)
+dat$cond <- as.numeric(as.factor(dat$condition)) - 1
+```
+
+# Deviations 
+
+Instead of using the self-reported number of deviations, we also coded the deviations based on two independent raters. 
+
+```{r data-coding}
+#load coded deviations
+rat <- read.csv('../data/data_deviations_coding.csv')
+```
+
+Agreement between the two raters is acceptable. 
+
+```{r irr}
+rat %>% 
+  select(c(total_c1, total_c2)) %>%
+  icc(., model = "oneway", type = "agreement", unit = "single")
+```
+
+```{r devs}
+#On how many teams do we disagree in our coding?
+sum(rat[,'total_c1']!=rat[,"total_c2"], na.rm = TRUE)
+```
+
+# Exploratory Analyses
+
+## Coded Deviations
+In an exploratory analysis, we also run the models using the coded deviations, instead of the self-reported deviations. 
+```{r icc-coded-selfreported}
+#ICC for coded and self-reported deviations
+cor <- data.frame(dat$deviation_count, rat$total)
+icc(cor, model = "oneway", type = "agreement", unit = "single")
+
+# total number of deviations coded and self-reported
+colSums(cor, na.rm = TRUE)
+```
+
+The ICC between the coded and self-reported deviations is pretty bad. 
+This means that either (1) coding deviations by comparing someone else's pregistration or analysis plan to their final analysis script and/or report is difficult, or (2) researchers are pretty bad at spotting and/or reporting the extent to which they deviated from their plan. Probably, both options are true to some extent.  
+
+```{r deviations-tab}
+# Deviations:
+# preregistration
+dat_sub <- rat[rat$condition=='preregistration', ]
+n_teams     <- nrow(dat_sub)
+tab_domains <- c('Nr. of Teams Reporting Deviations',
+                 'Exclusion Criteria',
+                 'Included Variables',
+                 'Operationalization of IV',
+                 'Statistical Model',
+                 'Statistical Test',
+                 'Operationalization of DV',
+                 'Hypothesis',
+                 'Direction of Effect'
+                 )
+x           <- c(sum(dat_sub$total > 0, na.rm = TRUE),
+                sum(dat_sub$exclusions, na.rm = TRUE),
+                sum(dat_sub$included_variables, na.rm = TRUE),
+                sum(dat_sub$opera_iv, na.rm = TRUE),
+                sum(dat_sub$stats_model, na.rm = TRUE),
+                sum(dat_sub$stats_test, na.rm = TRUE),
+                sum(dat_sub$opera_dv, na.rm = TRUE),
+                sum(dat_sub$hypotheses, na.rm = TRUE),
+                sum(dat_sub$direction_effect, na.rm = TRUE)
+                )
+tab_df     <- data.frame(domains = tab_domains, prereg_counts = x)
+tab_df[,2] <- paste0(x, '/', n_teams, ' (', round((x/n_teams)*100, 2), ' %)')
+# blinding
+dat_sub <- rat[rat$condition=='blinding', ]
+n_teams     <- nrow(dat_sub)
+x           <- c(sum(dat_sub$total > 0, na.rm = TRUE),
+                sum(dat_sub$exclusions, na.rm = TRUE),
+                sum(dat_sub$included_variables, na.rm = TRUE),
+                sum(dat_sub$opera_iv, na.rm = TRUE),
+                sum(dat_sub$stats_model, na.rm = TRUE),
+                sum(dat_sub$stats_test, na.rm = TRUE),
+                sum(dat_sub$opera_dv, na.rm = TRUE),
+                sum(dat_sub$hypotheses, na.rm = TRUE),
+                sum(dat_sub$direction_effect, na.rm = TRUE)
+                )
+tab_df$blinding_counts <- paste0(x, '/', n_teams, ' (', round((x/n_teams)*100, 2), ' %)')
+colnames(tab_df) <- c('', 'Preregistration', 'Analysis Blinding')
+apa_table(tab_df, 
+          stub_indents = list(`Domains` = 2:9), 
+          caption = "Reported deviations form planned analysis per condition.",
+          note = "Teams may report multiple deviations.", 
+          landscape = FALSE,
+          font_size = "small")
+```
+
+
+### Stan Model 
+```{r stanmodel-exp, message=FALSE, warning=FALSE, results='hide'}
+dat2 <- data.frame(dat,rat$total)
+dat2 <- dat2[!is.na(dat2$rat.total),]
+nrow(dat2)
+datalist <- list(N = nrow(dat2), 
+                 y = dat2$rat.total)
+  
+m0x <- rstan::stan(file ="../h4_m0.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+datalist <- list(N = nrow(dat2),
+                 y = dat2$rat.total,
+                 x = dat2$cond)
+m1x <- rstan::stan(file ="../h4_m1.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+# bridge sampling Bayes factor
+set.seed(fixed_seed)
+m0x_bridge <- bridgesampling::bridge_sampler(m0x, seed = fixed_seed)
+set.seed(fixed_seed)
+m1x_bridge <- bridgesampling::bridge_sampler(m1x, seed = fixed_seed)
+bfx_e0 <- bridgesampling::bf(m1x_bridge, m0x_bridge)
+```
+
+
+```{r output}
+# unconditional encompassing method Bayes factor
+samp <- rstan::extract(m1x)
+post <- mean(samp$bp<0 & samp$bl>0)
+prior <- 0.5^2
+bf_re <- post/prior 
+
+bfx_r0 <- bfx_e0$bf * bf_re
+```
+
+## Results 
+
+```{r results}
+bfx_r0
+# number of deviations by condition based on self-report
+table(dat$deviation_count, dat$condition)
+# number of deviations by condition based on coding
+table(rat$total, dat$condition)
+```
+
+## As preregistered
+
+1) deviations only 6 categories: dv and iv together and remove statistical test
+2) exclusion of teams that dropped out: cannot be circumvented because no data is available for those teams
+3) H1: raw work hours data instead of log-transformed
+4) H2: use Bayesian Mann-Whitney U test instead of normal t-test
+
+### H4 as preregistered (six categories)
+
+```{r stanmodel-pre, message=FALSE, warning=FALSE, results='hide'}
+dat$deviation_pre <- dat$deviation_count - dat$DeviateTest
+datalist <- list(N = nrow(dat), 
+                 y = dat$deviation_pre)
+  
+m0p <- rstan::stan(file ="../h4_m0.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+datalist <- list(N = nrow(dat),
+                 y = dat$deviation_pre,
+                 x = dat$cond)
+m1p <- rstan::stan(file ="../h4_m1.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+# bridge sampling Bayes factor
+set.seed(fixed_seed)
+m0p_bridge <- bridgesampling::bridge_sampler(m0p, seed = fixed_seed)
+set.seed(fixed_seed)
+m1p_bridge <- bridgesampling::bridge_sampler(m1p, seed = fixed_seed)
+bfp_e0 <- bridgesampling::bf(m1p_bridge, m0p_bridge)
+```
+
+
+```{r output-pre}
+# unconditional encompassing method Bayes factor
+samp <- rstan::extract(m1p)
+post <- mean(samp$bp<0 & samp$bl>0)
+prior <- 0.5^2
+bf_re <- post/prior 
+
+bfp_r0 <- bfp_e0$bf * bf_re
+bfp_r0
+```
+
+### Excluding teams that merged or changed condition (somehow)
+
+Exclude 4 teams that merged from different conditions (and thus ended up in the blinding condition) and one team that was assigned to the blinding condition, received the blinded data, but wrote a preregistration. 
+
+```{r stanmodel-sub, message=FALSE, warning=FALSE, results='hide'}
+datsub <- read.csv('../data/A_subgroup_data.csv')
+datsub$cond <- as.numeric(as.factor(datsub$condition)) - 1
+datalist <- list(N = nrow(datsub), 
+                 y = datsub$deviation_count)
+  
+m0s <- rstan::stan(file ="../h4_m0.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+datalist <- list(N = nrow(datsub),
+                 y = datsub$deviation_count,
+                 x = datsub$cond)
+m1s <- rstan::stan(file ="../h4_m1.stan",
+                  data = datalist,
+                  seed = fixed_seed,
+                  iter = 10000,
+                  warmup = 1000,
+                  cores = 4)
+
+# bridge sampling Bayes factor
+set.seed(fixed_seed)
+m0s_bridge <- bridgesampling::bridge_sampler(m0s, seed = fixed_seed)
+set.seed(fixed_seed)
+m1s_bridge <- bridgesampling::bridge_sampler(m1s, seed = fixed_seed)
+bfs_e0 <- bridgesampling::bf(m1s_bridge, m0s_bridge)
+```
+
+
+```{r output-sub}
+# unconditional encompassing method Bayes factor
+samp <- rstan::extract(m1s)
+post <- mean(samp$bp<0 & samp$bl>0)
+prior <- 0.5^2
+bf_re <- post/prior 
+
+bfs_r0 <- bfs_e0$bf * bf_re
+bfs_r0
+```
+
+
+# Other Supplemental Analyses
+
+## Differences prior and posterior beliefs
+

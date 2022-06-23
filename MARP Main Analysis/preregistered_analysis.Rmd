@@ -1,0 +1,197 @@
+---
+title: "Preregistered Analysis MARP"
+author: "Suzanne Hoogeveen"
+date: "11/18/2021"
+output: pdf_document
+---
+
+Here, we report the results of our own preregistered analysis for the MARP data. 
+The preregistration can be found at \url{https://osf.io/zyu8c/}. 
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library("brms")
+library("dplyr")
+library("ggplot2")
+library("ggrepel")
+library("papaja")
+```
+
+# Prepare Data 
+
+## Load data
+
+```{r load-data}
+dat <- read.csv("data/MARP_data.csv")
+```
+
+## Preprocess data
+
+- exclude attention check failures
+- create averages of the religiosity items (item 1, 2, 3, 5, 6, 7) and of the cultural norms items (item 1 and 2). 
+
+```{r preprocess}
+# exclude attention check failures
+dat <- dat[dat$attention_check==1,] 
+# create means for religiosity and cultural norms (all rel items except item 4)
+dat$rel_mean <- rowMeans(dat[,grepl('rel_', colnames(dat))&colnames(dat)!="rel_4"]) 
+dat$cnorm_mean <- rowMeans(dat[,c("cnorm_1","cnorm_2")])
+```
+
+## Standardize variables 
+
+- standardize predictors, outcome, and continuous covariates ('age' is centered and rescaled as decades to facilitate interpretation)
+
+```{r standardize-variables}
+std.cols <- c('ses', 'education', 'rel_mean', 'cnorm_mean','wb_overall_mean')
+dat[,std.cols] <- apply(dat[,std.cols], 2, function(x) scale(x, center = T, scale = T)[,1])
+dat$age <- scale(dat$age, center=T, scale=F)[,1]/10
+```
+
+```{r select-variables}
+analysis.cols <- c('ses', 'education', 'age', 'gender', 'rel_mean', 'cnorm_mean',
+                   'wb_overall_mean', 'gdp_scaled')
+dat <- dat[complete.cases(dat[,analysis.cols]),]
+```
+
+# Main Models
+
+Note that it takes quite a while to run the code and get the Stan models. 
+
+## Settings
+
+```{r settings-brms}
+iterations = 20000
+warmup = 5000
+chains = 4
+```
+
+## Hypothesis 1: is there a positive association between religiosity and well-being? 
+
+```{r brms-h1, cache=TRUE, results='hide', error=FALSE, message=FALSE, warning=FALSE}
+m0 <- brm(data = dat, family = gaussian(),
+          formula = wb_overall_mean ~ 1 + age + gender + ses + education + (1 | country),
+          prior = c(prior(normal(0, 10), class = Intercept),
+                    prior(normal(0, 1), class = b),
+                    prior(cauchy(0, 2), class = sd),
+                    prior(cauchy(0, 10), class = sigma)),
+          save_pars = save_pars(all = TRUE),
+          iter = iterations, warmup = warmup, chains = chains, cores = 4, seed = 2021)
+
+m1 <- brm(data = dat, family = gaussian(),
+          wb_overall_mean ~ 1 + age + gender + ses + education + rel_mean + (1 + rel_mean | country),
+          prior = c(prior(normal(0, 10), class = Intercept),
+                    prior(normal(0, 1), class = b),
+                    prior(cauchy(0, 2), class = sd),
+                    prior(cauchy(0, 10), class = sigma),
+                    prior(lkj(4), class = cor)),
+          save_pars = save_pars(all = TRUE), 
+          iter = iterations, warmup = warmup, chains = chains, cores = 4, seed = 2021)
+```
+
+```{r h1-results, cache=TRUE, message=FALSE, warning=FALSE}
+print(summary(m1), digits=3)
+
+# coefficients for the religiosity predictor 
+summary(m1)$fixed['rel_mean',]
+
+# Bayes factor for the inclusion of religiosity as a varying effect
+bf10 <- bayes_factor(m1,m0)
+bf10
+
+# Posterior model probability
+pp10 <- post_prob(m1,m0)
+pp10
+```
+
+For research question 1, we find strong evidence that religiosity is positively related to well-being: BF$_{10}=$ `r printnum(bf10[1], format="g")`, posterior model probability is `r printnum(pp10[1])` for $\mathcal{M}_1$ and `r printnum(pp10[2])` for $\mathcal{M}_0$, the standardized estimate (beta) of the religiosity coefficient is `r printnum(summary(m1)$fixed['rel_mean','Estimate'], digits=3)`, 95% credible interval [`r printnum(summary(m1)$fixed['rel_mean','l-95% CI'], digits=3)`, `r printnum(summary(m1)$fixed['rel_mean','u-95% CI'], digits=3)`]. 
+
+```{r h1-plot, echo=FALSE, fig.height=9}
+countries <- unique(dat$country)
+rbind(coef(m1)$country[, , 1],
+      coef(m1)$country[, , 2]) %>% 
+  as_tibble() %>% 
+  mutate(param   = c(paste("Intercept", countries), paste("religiosity", countries)),
+         reorder = c(24:1, 48:25)) %>% 
+
+  # plot
+  ggplot(aes(x = reorder(param, reorder))) +
+  geom_hline(yintercept = 0, linetype = 3, color = "#8B9DAF") +
+  geom_pointrange(aes(ymin = Q2.5, ymax = Q97.5, y = Estimate, color = reorder < 25),
+                  shape = 20, size = 3/4) +
+  scale_color_manual(values = c("#394165", "#A65141")) +
+  xlab(NULL) +
+  coord_flip() +
+  theme_apa() +
+  ggtitle("Estimated effect of individual religiosity on well-being and\nintercepts per country") +
+  theme(legend.position = "none",
+        axis.ticks.y    = element_blank(),
+        axis.text.y     = element_text(hjust = 0))
+```
+
+## Hypothesis 2: does the association between religiosity and well-being depend on cultural norms of religion? 
+
+```{r brms-h2, cache=TRUE, results='hide', error=FALSE, message=FALSE, warning=FALSE}
+m02 <- brm(data = dat, family = gaussian(),
+          formula = wb_overall_mean ~ 1 + age + gender + ses + education + rel_mean + 
+            cnorm_mean + gdp_scaled + (1 + rel_mean | country),
+          prior = c(prior(normal(0, 10), class = Intercept),
+                    prior(normal(0, 1), class = b),
+                    prior(cauchy(0, 2), class = sd),
+                    prior(cauchy(0, 10), class = sigma),
+                    prior(lkj(4), class = cor)),
+          save_pars = save_pars(all = TRUE),
+          iter = iterations, warmup = warmup, chains = chains, cores = 4, seed = 2021)
+
+m2 <- brm(data = dat, family = gaussian(),
+          formula = wb_overall_mean ~ 1 + age + gender + ses + education + rel_mean + 
+            cnorm_mean + gdp_scaled + rel_mean:cnorm_mean + (1 + rel_mean | country),
+          prior = c(prior(normal(0, 10), class = Intercept),
+                    prior(normal(0, 1), class = b),
+                    prior(cauchy(0, 2), class = sd),
+                    prior(cauchy(0, 10), class = sigma),
+                    prior(lkj(4), class = cor)),
+          save_pars = save_pars(all = TRUE), 
+          iter = iterations, warmup = warmup, chains = chains, cores = 4, seed = 2021)
+```
+
+```{r h2-results, cache=TRUE, message=FALSE, warning=FALSE}
+print(summary(m2), digits=3)
+
+# coefficients for the religiosity predictor 
+summary(m2)$fixed['rel_mean:cnorm_mean',]
+
+# Bayes factor for the inclusion of religiosity as a varying effect
+bf20 <- bayes_factor(m2,m02)
+bf20
+
+# Posterior model probability
+pp20 <- post_prob(m2,m02)
+pp20
+```
+
+For research question 2, we find strong evidence that the association between religiosity and well-being depends on the cultural norms of religion within a country: BF$_{10}=$ `r printnum(bf20[1])`, posterior model probability is `r printnum(pp20[1])` for $\mathcal{M}_2$ and `r printnum(pp20[2])` for the corresponding $\mathcal{M}_0$, the standardized estimate (beta) of the religiosity-by-cultural norms interaction effect is `r printnum(summary(m2)$fixed['rel_mean:cnorm_mean','Estimate'], digits=3)`, 95% credible interval [`r printnum(summary(m2)$fixed['rel_mean:cnorm_mean','l-95% CI'], digits=3)`, `r printnum(summary(m2)$fixed['rel_mean:cnorm_mean','u-95% CI'], digits=3)`]. 
+
+
+```{r h2-plot, echo=FALSE}
+countries <- unique(dat$country)
+norms <- dat %>% group_by(country) %>% summarise(mean=mean(cnorm_mean))
+coef(m1)$country[, , 2] %>%
+  as_tibble() %>%
+  mutate(country = countries, 
+         norms = norms$mean) %>% 
+
+  # plot
+  ggplot(aes(x = norms, y = Estimate)) +
+  scale_x_continuous(limits = c(-1,1.5)) +
+  geom_point() +
+  geom_errorbar(aes(ymin = Q2.5, ymax = Q97.5)) +
+  geom_label_repel(aes(label=country)) + 
+  ylab("Religiosity effect (estimated coefficient)") + 
+  xlab("Cultural norms of religiosity (observed)") +
+  theme_apa() +
+  ggtitle("Country-level association between observed cultural norms of religion \nand the estimated effect of individual religiosity on well-being") +
+  theme(legend.position = "none",
+        axis.ticks.y    = element_blank(),
+        axis.text.y     = element_text(hjust = 0))
+```

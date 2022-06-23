@@ -1,0 +1,392 @@
+---
+title             : "Analysis Blinding Versus Preregistration - Tables and Figures"
+shorttitle        : "Title"
+
+author: 
+  - name          : "Alexandra Sarafoglou"
+  - name          : "Suzanne Hoogeveen"
+
+floatsintext      : no
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+keep_tex          : true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(papaja)
+library(ggplot2)
+library(purrr)
+library(stringr)
+library(dplyr)
+library(tidyverse)
+library(rlang)
+library(RColorBrewer)
+library(BayesFactor)
+source('../helper_functions/function_variable_table.R')
+source('../helper_functions/function_deviations_plot.R')
+source('../helper_functions/function_capitalize_words.R')
+source('../helper_functions/function_likert_plot.R')
+source('../helper_functions/function_likert_plot_odd.R')
+source('../helper_functions/function_likert_plot_new.R')
+source('../helper_functions/function_effect_size_plot.R')
+```
+
+```{r load-data}
+datafile <- 'data/data_prereg_blinding_unblinded.csv' # specify correct path
+dat <- read.csv(file = datafile, header=T)
+```
+
+```{r domains-and-positions}
+dat$Positions <- gsub(",",";", dat$Positions)
+mat_positions <- create_variable_matrix(dat$Positions, colnames = dat$Team)
+# reorder mat based on position
+mat_positions <- mat_positions[c("Doctoral student","Post-doc","Assistant professor","Associate professor","Full professor"),]
+
+mat_domains <- create_variable_matrix(dat$Domain, colnames = dat$Team)
+# reorder mat based on position
+mat_domains <- mat_domains[c("Religion and Culture", "Methodology and Statistics","Health",
+                             "Social Psychology","Cognition","Psychology (Other)"),]
+
+mat_positions_domains <- rbind(mat_positions, mat_domains)
+
+# Positions:
+# preregistration
+x_prereg      <- dat$Positions[dat$condition == 'preregistration']
+item_list     <- strsplit(x_prereg, split = "; ")
+tab_positions <- table(.capwords(trimws(unlist(item_list)))) 
+tab_df       <- as.data.frame(round(sort(tab_positions/length(x_prereg) * 100, decreasing = TRUE), 2))
+tab_df[,2]    <- paste0(sort(tab_positions, decreasing = TRUE), '/',length(x_prereg), ' (', tab_df[,2], ' %)')
+# blinding
+x_blind       <- dat$Positions[dat$condition == 'blinding']
+item_list     <- strsplit(x_blind, split = "; ")
+tab_positions <- table(.capwords(trimws(unlist(item_list)))) 
+tab_df0        <- as.data.frame(round(sort(tab_positions/length(x_blind) * 100, decreasing = TRUE), 2))
+tab_df[,3]    <- paste0(sort(tab_positions, decreasing = TRUE), '/',length(x_blind), ' (', tab_df0[,2], ' %)')
+
+# Domain:
+# preregistration
+x_prereg     <-  dat$Domain[dat$condition == 'preregistration']
+item_list    <- strsplit(x_prereg, split = "; ")
+tab_domains  <- table(trimws(unlist(item_list))) 
+tab_df_2     <- as.data.frame(round(sort(tab_domains/length(x_prereg) * 100, decreasing = TRUE), 2))
+tab_df_2[,2] <- paste0(sort(tab_domains, decreasing = TRUE), '/',length(x_prereg), ' (', tab_df_2[,2], ' %)')
+# blinding
+x_blind      <-  dat$Domain[dat$condition == 'blinding']
+item_list    <- strsplit(x_blind, split = "; ")
+tab_domains  <- table(trimws(unlist(item_list))) 
+tab_df_20     <- as.data.frame(round(sort(tab_domains/length(x_blind) * 100, decreasing = TRUE), 2))
+tab_df_2[,3] <- paste0(sort(tab_domains, decreasing = TRUE), '/',length(x_blind), ' (', tab_df_20[,2], ' %)')
+
+tab_df           <- rbind(tab_df, tab_df_2)
+colnames(tab_df) <- c('', 'Preregistration', 'Analysis Blinding')
+
+apa_table(tab_df, 
+          stub_indents = list(`Positions` = 1:5, `Domains` = 6:11), 
+          caption = "Positions and domains featured in the analysis teams per condition.",
+          note = "Teams may include multiple members of the same position and in the same domain.", 
+          landscape = FALSE,
+          font_size = "small")
+```
+
+```{r deviations-fig}
+op <- par(cex.main = 2, mar = c(5, 6, 4, 5) + 0.1, mgp = c(3.5, 1, 0), cex.lab = 1.5, 
+          font.lab = 2, cex.axis = 1.7, bty = "n", las = 1)
+# Plot number of deviations per condition
+plot_deviations(dat, labels = c("Blinding","Preregistration"),
+                position = c(8, 40),
+                xlabel = "Deviations")
+```
+
+```{r deviations-tab}
+# Deviations:
+# preregistration
+dat_sub <- dat[dat$condition=='preregistration', ]
+n_teams     <- nrow(dat_sub)
+tab_domains <- c('Nr. of Teams Reporting Deviations',
+                 'Exclusion Criteria',
+                 'Included Variables',
+                 'Operationalization of IV',
+                 'Statistical Model',
+                 'Statistical Test',
+                 'Operationalization of DV',
+                 'Hypothesis',
+                 'Direction of Effect'
+                 )
+x           <- c(sum(dat_sub$deviation_count > 0),
+                sum(dat_sub$DeviateExclusions),
+                sum(dat_sub$DeviateVariables),
+                sum(dat_sub$DeviateIV),
+                sum(dat_sub$DeviateModel),
+                sum(dat_sub$DeviateTest),
+                sum(dat_sub$DeviateDV),
+                sum(dat_sub$DeviateHypotheses),
+                sum(dat_sub$DeviateDirection)
+                )
+tab_df     <- data.frame(domains = tab_domains, prereg_counts = x)
+tab_df[,2] <- paste0(x, '/', n_teams, ' (', round((x/n_teams)*100, 2), ' %)')
+# blinding
+dat_sub <- dat[dat$condition=='blinding', ]
+n_teams     <- nrow(dat_sub)
+x           <- c(sum(dat_sub$deviation_count > 0),
+                 sum(dat_sub$DeviateExclusions),
+                 sum(dat_sub$DeviateVariables),
+                 sum(dat_sub$DeviateIV),
+                 sum(dat_sub$DeviateModel),
+                 sum(dat_sub$DeviateTest),
+                 sum(dat_sub$DeviateDV),
+                 sum(dat_sub$DeviateHypotheses),
+                 sum(dat_sub$DeviateDirection)
+)
+tab_df$blinding_counts <- paste0(x, '/', n_teams, ' (', round((x/n_teams)*100, 2), ' %)')
+colnames(tab_df) <- c('', 'Preregistration', 'Analysis Blinding')
+apa_table(tab_df, 
+          stub_indents = list(`Domains` = 2:9), 
+          caption = "Reported deviations form planned analysis per condition.",
+          note = "Teams may report multiple deviations.", 
+          landscape = FALSE,
+          font_size = "small")
+```
+
+```{r knowledge-theory-fig}
+# Knowledge Questions: Religion and Well-Being
+knowledge_data_theory<- data.frame(question = rep(factor(c('Preregistration', 'Blinding')), each = 5),
+                             vars = 'Expertise',
+                             levels = rep(factor(c('No knowledge', 2:4, 'Expert'), levels = c('No knowledge', 2:4, 'Expert')), 2),
+                             n = c(as.numeric(table(dat[dat$condition=='preregistration',]$TheoreticalKnowledge)), 
+                                   as.numeric(table(dat[dat$condition=='blinding',]$TheoreticalKnowledge)))
+                             )
+# plot
+likert_plot_odd(knowledge_data_theory, limits = c(-1,1.2), text_push = 0.1,
+                questions = "question", levels = "levels", levels_to_drop = NA, n = "n", textsize = 18, 
+                title='"Please rate your knowledge on the topic of\n religion and well-being"')
+```
+
+```{r knowledge-theory-fig2}
+# Knowledge Questions: Religion and Well-Being
+knowledge_data_theory<- data.frame(question = rep(factor(c('Preregistration', 'Blinding')), each = 5),
+                             vars = 'Theoretical Knowledge',
+                             levels = rep(factor(c('No knowledge', 2:4, 'Expert'), levels = c('No knowledge', 2:4, 'Expert')), 2),
+                             n = c(as.numeric(table(dat[dat$condition=='preregistration',]$TheoreticalKnowledge)), 
+                                   as.numeric(table(dat[dat$condition=='blinding',]$TheoreticalKnowledge)))
+                             )
+knowledge_data_methods <- data.frame(question = rep(factor(c('Preregistration', 'Blinding')), each = 5),
+                                    vars = 'Methodological Knowledge',
+                                    levels = rep(factor(c('No knowledge', 2:4, 'Expert'), levels = c('No knowledge', 2:4, 'Expert')), 2),
+                                    n = c(0, as.numeric(table(dat[dat$condition=='preregistration',]$MethodsKnowledge)), 
+                                        c(0, as.numeric(table(dat[dat$condition=='blinding',]$MethodsKnowledge))))
+                                    )
+
+knowledge_data <- data.frame(rbind(knowledge_data_theory, knowledge_data_methods)) %>% 
+  group_by(question,vars) %>%
+  mutate(prop_support = n / sum(n),
+         label = paste0(round_percent(prop_support), "%"))
+knowledge_data$label[knowledge_data$label=="0%"] <-  ""
+knowledge_data$vars <- factor(knowledge_data$vars, levels = c("Theoretical Knowledge", "Methodological Knowledge"))
+
+textsize=12
+
+# plot
+ggplot(knowledge_data, aes(fill = forcats::fct_rev(levels), y = n, x = question)) +
+  geom_bar(position = position_stack(), stat = "identity") +
+  scale_fill_manual(values = rev(c("#D5A16D", "#DDC3A9", "grey90", "#99D0CD", "#4EBCB5")), name="") +
+  #scale_y_continuous(name = "", breaks = seq(0,1,by=0.25), labels = paste0(seq(0,100,by=25),"%")) +
+  geom_text(aes(label = label), position = position_stack(vjust=0.5)) +
+  facet_wrap(~vars) +
+  ylab("Number of teams") +
+  theme(
+      title = element_text(size = textsize),
+      axis.text = element_text(size = textsize),
+      #axis.title = element_blank(),
+      strip.text = element_text(
+        hjust = 0, face = 'bold', 
+        size = textsize
+      ),
+      axis.title.x = element_blank(),
+      panel.background = element_blank(),
+      panel.grid = element_blank(),
+      axis.ticks = element_blank(),
+      strip.background = element_blank(),
+      strip.text.x = element_text(face="plain"),
+      panel.border = element_rect(color = 'black', linetype = "solid", fill = NA),
+      legend.text = element_text(size = textsize*4/5)
+      )
+```
+
+```{r knowledge-methods-fig}
+knowledge_data_methods <- data.frame(question = rep(factor(c('               ', '        ')), each = 5),
+                                    vars = 'Expertise',
+                                    levels = rep(factor(c('No knowledge', 2:4, 'Expert'), levels = c('No knowledge', 2:4, 'Expert')), 2),
+                                    n = c(0, as.numeric(table(dat[dat$condition=='preregistration',]$MethodsKnowledge)), 
+                                        c(0, as.numeric(table(dat[dat$condition=='blinding',]$MethodsKnowledge))))
+                                    )
+# plot
+likert_plot_odd(knowledge_data_methods, limits = c(-1,1.2), text_push = 0.1,
+                questions = "question", levels = "levels", levels_to_drop = NA, n = "n", textsize = 18, 
+                title='"Please rate your knowledge on the topic of\n methodology and statistics"')
+```
+
+```{r descriptives-tab}
+## Table which creates means, standard deviations and correlations
+vars <- c('X', 'condition', 
+         'work',  'HoursS1',  'HoursS2', 
+         'effort',  'EffortS1',  'EffortS2', 
+         'frustration',  'FrustrationS1',  'FrustrationS2', 
+         'time_anticipated', 'TimeAnticipatedS1','TimeAnticipatedS2')
+descriptives_dat_wide <- dat[, vars]
+descriptives_dat_wide$condition <- str_to_title(descriptives_dat_wide$condition)
+descriptives_dat_wide$work_log    <- log(descriptives_dat_wide$work)
+descriptives_dat_wide$HoursLogS1 <- log(descriptives_dat_wide$HoursS1)
+descriptives_dat_wide$HoursLogS2 <- log(descriptives_dat_wide$HoursS2)
+
+descriptives_dat <- 
+  reshape(descriptives_dat_wide, 
+          idvar = 'X', 
+          varying = list(c(3,6,9,12,15), c(4,7,10,13,16), c(5,8,11,14,17)), 
+          times= c('Work', 'Effort', 'Frustration', 'TimeAnticipated','WorkLog'), 
+          direction = 'long',
+          v.names = c('Total', 'Stage1','Stage2'),
+          timevar = 'DV')
+#descriptives_dat$Stage     <- factor(descriptives_dat$Stage, levels = c('Total', 'Stage1','Stage2'))
+
+
+#dvs <- c('Work', 'Effort', 'Frustration', 'TimeAnticipated')
+dvs <- c('Total', 'Stage1', 'Stage2')
+
+descriptives_tab <- 
+  descriptives_dat %>% 
+  dplyr::group_by(DV, condition) %>%
+  summarise(across(dvs, 
+                   list(MeanAndSD = ~paste0('$'  , round(mean(.x, na.rm = TRUE),2),
+                                           '\\, (', round(sd(.x, na.rm = TRUE), 2), ')$')
+                        )
+            ))
+
+descriptives_tab <- 
+  descriptives_dat %>% 
+  dplyr::group_by(DV, condition) %>%
+  summarise(across(dvs, 
+                   list(MeanAndSD = ~paste0(round(mean(.x, na.rm = TRUE),2),
+                                           ' (', round(sd(.x, na.rm = TRUE), 2), ')')
+                        )
+            ))
+
+
+get_corr <- function(dat, condition, var){
+
+  set.seed(4491)
+  vars         <- paste0(var, 'S', 1:2)
+  dat          <- na.omit(dat[dat$condition == condition, vars])
+  samples      <- BayesFactor::correlationBF(y = dat[,1], x = dat[,2], 
+                                             posterior = TRUE,
+                                             iterations = 1e4)
+  estimate     <- round(quantile(samples[,'rho'], c(0.5, 0.025, 0.975)), 2)
+  estimate_txt <- paste0(estimate[1], ' [', estimate[2], ', ', estimate[3], ']')
+  return(estimate_txt)
+  
+}
+
+cor_data <- data.frame(
+  Corr = c(get_corr(descriptives_dat_wide, 'Blinding', 'Effort'), 
+           get_corr(descriptives_dat_wide, 'Preregistration', 'Effort'),
+           get_corr(descriptives_dat_wide, 'Blinding', 'Frustration'),
+           get_corr(descriptives_dat_wide, 'Preregistration', 'Frustration'),
+           get_corr(descriptives_dat_wide, 'Blinding', 'TimeAnticipated'),
+           get_corr(descriptives_dat_wide, 'Preregistration', 'TimeAnticipated'),
+           get_corr(descriptives_dat_wide, 'Blinding', 'Hours'), 
+           get_corr(descriptives_dat_wide, 'Preregistration', 'Hours'),
+           get_corr(descriptives_dat_wide, 'Blinding', 'HoursLog'), 
+           get_corr(descriptives_dat_wide, 'Preregistration', 'HoursLog'))
+  )
+
+descriptives_tab <- cbind(descriptives_tab, cor_data)
+descriptives_tab$DV <- rep(c("Effort","Frustration","Reflection Hours Worked","Hours Worked","Log(Hours Worked)"), each=2)
+
+colnames(descriptives_tab) <- c('Measure', 'Condition', 'Total', 'Stage 1', 'Stage 2', '$\\rho(Stage1, Stage2)$')
+papaja::apa_table(
+  as.data.frame(descriptives_tab),
+  label = 'tab:dv_descriptives',
+  caption = "Descriptives Table",
+  note = "For each stage, the number represents the mean with the standard deviation in round brackets. For correlations, the number represents the median estimate for the Bayesian Pearson correlation coefficient, the number in square brackets the 95\\% credible interval.",
+  escape = TRUE
+)
+```
+
+```{r plot_es_1, fig.width=10, fig.height=7}
+cols <- RColorBrewer::brewer.pal(3, "Dark2")[1:2]
+par(mfrow=c(2,2))
+# RQ1
+plotdat <- subset(dat, subset = MARP_ES_type_1 == "beta" & !is.na(Standardized_ES_1) & condition == "blinding")
+# Percentage positive effect size estimates
+mean(plotdat$Standardized_ES_1 > 0)*100
+# Percentage CIs not include zero
+100-mean(plotdat$lower_CI_1 <= 0)*100
+# Median and MAD of the betas
+median(plotdat$Standardized_ES_1)
+mad(plotdat$Standardized_ES_1)
+plotter(effect = plotdat$Standardized_ES_1,
+        lower = plotdat$lower_CI_1,
+        upper = plotdat$upper_CI_1,
+        subj_evidence = plotdat$condition,
+        add_subjective = FALSE,
+        main = "Blinding - RQ1",
+        ylab = expression(paste("Standardized Effect Size (", beta, ")")),
+        yrange = c(-.1,.5),
+        condition_col = cols[1])
+
+plotdat <- subset(dat, subset = MARP_ES_type_1 == "beta" & !is.na(Standardized_ES_1) & condition == "preregistration")
+mean(plotdat$Standardized_ES_1 > 0)*100
+100-mean(plotdat$lower_CI_1 <= 0)*100
+median(plotdat$Standardized_ES_1)
+mad(plotdat$Standardized_ES_1)
+plotter(effect = plotdat$Standardized_ES_1,
+        lower = plotdat$lower_CI_1,
+        upper = plotdat$upper_CI_1,
+        subj_evidence = plotdat$condition,
+        add_subjective = FALSE,
+        main = "Preregistration - RQ1",
+        ylab = expression(paste("Standardized Effect Size (", beta, ")")),
+        yrange = c(-.1,.5),
+        condition_col = cols[2])
+# RQ2
+plotdat <- subset(dat, subset = MARP_ES_type_2 == "beta" & !is.na(Standardized_ES_2) & condition == "blinding")
+mean(plotdat$Standardized_ES_2 > 0)*100
+100-mean(plotdat$lower_CI_2 <= 0)*100
+median(plotdat$Standardized_ES_2)
+mad(plotdat$Standardized_ES_2)
+plotter(effect = plotdat$Standardized_ES_2,
+        lower = plotdat$lower_CI_2,
+        upper = plotdat$upper_CI_2,
+        subj_evidence = plotdat$condition,
+        add_subjective = FALSE,
+        main = "Blinding - RQ2",
+        ylab = expression(paste("Standardized Effect Size (", beta, ")")),
+        yrange = c(-.1,.5),
+        condition_col = cols[1])
+
+plotdat <- subset(dat, subset = MARP_ES_type_2 == "beta" & !is.na(Standardized_ES_2) & condition == "preregistration")
+mean(plotdat$Standardized_ES_2 > 0)*100
+100-mean(plotdat$lower_CI_2 <= 0)*100
+median(plotdat$Standardized_ES_2)
+mad(plotdat$Standardized_ES_2)
+plotter(effect = plotdat$Standardized_ES_2,
+        lower = plotdat$lower_CI_2,
+        upper = plotdat$upper_CI_2,
+        subj_evidence = plotdat$condition,
+        add_subjective = FALSE,
+        main = "Preregistration - RQ2",
+        ylab = expression(paste("Standardized Effect Size (", beta, ")")),
+        yrange = c(-.1,.5),
+        condition_col = cols[2])
+
+
+```
+

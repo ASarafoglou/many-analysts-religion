@@ -1,0 +1,926 @@
+---
+title             : "Key Results Many-Analysts Religion Project"
+shorttitle        : "MARP"
+
+author:
+  - name: Suzanne Hoogeveen
+    affiliation: '1'
+    corresponding: yes
+    email: suzanne.j.hoogeveen@gmail.com
+    address: Enter postal address here
+  - name: Alexandra Sarafoglou
+    affiliation: '1'
+    corresponding: yes
+    email: alexandra.sarafoglou@gmail.com
+    address: Enter postal address here
+
+bibliography      : ["r-references.bib"]
+
+floatsintext      : yes
+figurelist        : no
+tablelist         : no
+footnotelist      : no
+linenumbers       : yes
+mask              : no
+draft             : no
+
+documentclass     : "apa6"
+classoption       : "man"
+output            : papaja::apa6_pdf
+
+header-includes:
+  - \usepackage{setspace}
+  - \AtBeginEnvironment{tabular}{\singlespacing}
+  - \AtBeginEnvironment{lltable}{\singlespacing}
+  - \AtBeginEnvironment{tablenotes}{\doublespacing}
+  - \captionsetup[table]{font={stretch=0.9}}
+  - \captionsetup[figure]{font={stretch=1.5}}
+  - \setlength{\tabcolsep}{4pt}
+---
+
+```{r setup, include = FALSE}
+library("papaja")
+library("tidyverse")
+library("tibble")
+library("dplyr")
+library("gridExtra")
+library("grid")
+library("ggpubr")
+library("RColorBrewer")
+library("forcats")
+library("logspline")
+library("cowplot")
+library("raincloudplots")
+r_refs("r-references.bib")
+```
+
+```{r analysis-preferences}
+# Seed for random number generation
+set.seed(42)
+knitr::opts_chunk$set(cache.extra = knitr::rand_seed)
+```
+
+```{r functions}
+# load helper functions
+# setwd("~/Dropbox/Projects/SharedFiles_SuzanneAlex/Blinding Many Analysts/OSF_Folder/analysis")
+source('../helper_functions/function_likert_plot_new.R')
+source('../helper_functions/function_effect_size_plot.R')
+source('../helper_functions/function_variable_table.R')
+source('../helper_functions/function_capitalize_words.R')
+source('../helper_functions/function_change_variable_names.R')
+source('../helper_functions/function_butterfly_plot.R')
+source('../helper_functions/function_raincloud_likert_plot.R')
+source('../helper_functions/function_spearman_rho.R')
+source('../helper_functions/function_plot_correlation.R')
+```
+
+```{r load_data}
+dat_complete <- read.csv('data/MARP_data_main.csv')
+teams_complete <- dat_complete$Team
+# included variables and statistical approaches (coded)
+vars <- read.csv('data/variable_coding.csv')
+#write.csv(vars, file = '../data/variable_coding.csv', row.names = FALSE)
+
+vars <- vars[vars$analysis_team_nr %in% teams_complete,] #only keep included teams
+# religion dataset to create methods table
+dat_rel <- read.csv('data/MARP_data.csv')
+
+#load subjective data
+dat_experiences <- read.csv("data/MARP_data_experiences.csv")
+```
+
+```{r methods-table}
+dat_rel$religiosity <- rowMeans(dat_rel[,3:11])
+dat_rel$norms <- rowMeans(dat_rel[,12:13])
+descTab <- dat_rel %>% 
+  group_by(country) %>%
+  summarise(`N` = printnum(as.numeric(n()), big.mark=",",digits=0), 
+            `Age (SD)` = paste0(printnum(mean(age, na.rm=T),digits=1)," (",printnum(sd(age,na.rm=T),digits=1),")"),
+            `Women` = paste0(printnum(sum(gender=="woman")/n()*100, digits=1),"%"), 
+            `Well-being` = printnum(mean(wb_overall_mean, na.rm = T),digits=1),
+            Religiosity = printnum(mean(religiosity), digits=2), 
+            `Cultural norms` = printnum(mean(norms), digits=2))
+
+total <- dat_rel %>%
+  summarise(country = "Total", 
+            `N` = printnum(as.numeric(n()), big.mark=",",digits=0),
+            `Age (SD)` = paste0(printnum(mean(age, na.rm=T),digits=1)," (",printnum(sd(age,na.rm=T),digits=1),")"),
+            `Women` = paste0(printnum(sum(gender=="woman")/n()*100, digits=1),"%"), 
+            `Well-being` = printnum(mean(wb_overall_mean, na.rm = T),digits=1),
+            Religiosity = printnum(mean(religiosity), digits=2), 
+            `Cultural norms` = printnum(mean(norms), digits=2))
+descTab <- rbind(descTab, total)
+colnames(descTab)[1] <- "Country"
+
+apa_table(descTab, 
+          align = c("lcccccc"),
+          caption = "Descriptive Statistics per Country", 
+          note = "Well-being refers to the average of self-rated general (2 items), physical (7 items), psychological (6 items), and social (3 items) health, measured on a 5-point Likert scale. Religiosity refers to the average self-reported level of individual religiosity based on 9 items. Cultural norms refers to the average perceived descriptive norm of religiosity in one's country based on 2 items. Religiosity and cultural norms are transformed on a 0-1 scale.")
+```
+
+```{r religions-table}
+religions <- dat_rel$denomination
+religion_groups <- case_when(religions == "Christian" ~ "Christian",
+                             religions == "Christian (Orthodox - Russian/Greek/etc.)" ~ "Christian",
+                             religions == "Christian (Protestant)" ~ "Christian", 
+                             religions == "Christian (Roman Catholic)" ~ "Christian",
+                             religions == "Evangelical" ~ "Christian",
+                             religions == "Muslim" ~ "Muslim",
+                             religions == "Muslim (Alevi)" ~ "Muslim", 
+                             religions == "Muslim (Azhari)" ~ "Muslim",
+                             religions == "Muslim (non-sectarian)" ~ "Muslim",
+                             religions == "Muslim (Sunni)" ~ "Muslim",
+                             religions == "Druze" ~ "Other", 
+                             religions == "Jain" ~ "Other", 
+                             religions == "Shinto" ~ "Other", 
+                             religions == "Spiritist" ~ "Other", 
+                             religions == "Taoist" ~ "Other",
+                             religions == "African religions" ~ "Other",
+                             religions == "Other:" ~ "Other", 
+                             is.na(religions) ~ "None",
+                             TRUE ~ religions)
+dat_rel$religions <- religion_groups
+
+relTab <- dat_rel %>% 
+  group_by(country) %>%
+  summarise(Christian = sum(religions=="Christian")/n()*100,
+            Muslim    = sum(religions=="Muslim")/n()*100, 
+            Hindu     = sum(religions=="Hindu")/n()*100, 
+            Buddhist  = sum(religions=="Buddhist")/n()*100, 
+            Jewish    = sum(religions=="Jewish")/n()*100, 
+            Other     = sum(religions=="Other")/n()*100, 
+            None      = sum(religions=="None")/n()*100)
+relTab[,2:8] <- t(apply(relTab[,2:8], 1, function(x) paste0(printnum(round_percent_decimal(x),digits=1)," %")))
+
+total <- dat_rel %>%
+  summarise(country = "Total",
+            Christian = sum(religions=="Christian")/n()*100,
+            Muslim    = sum(religions=="Muslim")/n()*100, 
+            Hindu     = sum(religions=="Hindu")/n()*100, 
+            Buddhist  = sum(religions=="Buddhist")/n()*100, 
+            Jewish    = sum(religions=="Jewish")/n()*100, 
+            Other     = sum(religions=="Other")/n()*100, 
+            None      = sum(religions=="None")/n()*100)
+total[2:8] <- paste0(printnum(round_percent_decimal(total[2:8]),digits=1)," %")
+
+
+
+relTab <- rbind(relTab, total)
+colnames(relTab)[1] <- "Country"
+
+#add note that in Israel the question was about being part of a religious group or community (so not culturally or ethnically Jewish)
+relTab[relTab$Country=="Israel","Jewish"] <- paste0(relTab[relTab$Country=="Israel","Jewish"], "$^a$")
+
+apa_table(relTab, 
+          align = c("lccccccc"),
+          caption = "Religious Denomination per Country", 
+          col_spanners = list(`Religious group` = c(2:8)),
+          escape = FALSE,
+          note = "Percentage of people indicating to be member of the respective religious groups. Note that the response options were adjusted and further specified per country. \\\ $^a$ As we asked specifically about being part of a religious group or community, this does not include people who only identify as culturally or ethnically Jewish, hence the relatively low rate.")
+
+total
+```
+
+```{r unique_es}
+rq1 <- na.omit(dat_complete[dat_complete$MARP_ES_type_1=="beta",c("Standardized_ES_1","upper_CI_1","lower_CI_1")])
+semi_join(rq1, unique(rq1[duplicated(rq1),]))
+nrow(rq1)
+nrow(distinct(rq1))
+
+rq2 <- na.omit(dat_complete[dat_complete$MARP_ES_type_2=="beta",c("Standardized_ES_2","upper_CI_2","lower_CI_2")])
+semi_join(rq2, unique(rq2[duplicated(rq2),]))
+nrow(rq2)
+nrow(distinct(rq2))
+
+```
+
+# Suitability of Research Question and Analysis
+
+```{r suitability-confidence, fig.width=12, fig.height=6}
+suitability_plot <- likert_plot_new(dat = dat_complete, items = c("SuitableData1","SuitableData2"), 
+                               title = '"How suitable do you find the dataset for answering the\nresearch question?"', 
+                               labs = c('Research question 1', 'Research question 2'), 
+                               levels = c('Very\nunsuitable', 2:6, 'Very\nsuitable'), 
+                               yaxis = FALSE, limits = c(-1,1.2), textsize = 18, text_push = 0.1)
+legend1 <- cowplot::get_legend(suitability_plot + theme(legend.position = c(0.5,0.5)))
+confidence_plot <- likert_plot_new(dat = dat_complete, items = c("SuitableApproach"), 
+                               title = '"How confident are you that your statistical approach\nis suitable for analyzing the research questions?"', 
+                               labs = c('         Confidence      '), 
+                               levels = c('Not at all\nconfident', 2:6, 'Very\nconfident'), 
+                               yaxis = TRUE, limits = c(-1,1.2), textsize = 18, text_push = 0.1)
+legend2 <- cowplot::get_legend(confidence_plot + theme(legend.position = c(0.5,0.55)))
+cowplot::plot_grid(suitability_plot, legend1, confidence_plot, legend2,  
+                   ncol=2,nrow=2, rel_widths = c(1,.2), rel_heights = c(1,.7))
+```
+
+
+
+# Prior and Post Subjective Beliefs
+
+```{r percentages-rq1, echo=TRUE}
+# prior beliefs that hypothesis 1 is unlikely 
+sum(table(dat_complete$EstimationRQ1)[1:2])
+sum(table(dat_complete$EstimationRQ1)[1:2])/sum(table(dat_complete$EstimationRQ1))*100
+
+# prior beliefs that hypothesis 1 is likely 
+sum(table(dat_complete$EstimationRQ1)[4:6])
+sum(table(dat_complete$EstimationRQ1)[4:6])/sum(table(dat_complete$EstimationRQ1))*100
+
+# post beliefs that hypothesis 1 is unlikely 
+sum(table(dat_complete$AnswerRQ1)[1:3])
+sum(table(dat_complete$AnswerRQ1)[1:3])/sum(table(dat_complete$AnswerRQ1))*100
+
+# post beliefs that hypothesis 1 is likely 
+sum(table(dat_complete$AnswerRQ1)[5:7])
+sum(table(dat_complete$AnswerRQ1)[5:7])/sum(table(dat_complete$AnswerRQ1))*100
+
+# mean prior beliefs
+mean(dat_complete$EstimationRQ1, na.rm=T)
+# mean post beliefs 
+mean(dat_complete$AnswerRQ1, na.rm=T)
+```
+
+```{r raincloud-rq1, fig.width=9}
+mycols <- c("grey36","grey36","#03A89E","#CD7F32")
+
+beliefs_rq1 <- raincloud_likert_plot(dat_complete, 
+                      title = '"How likely do you think it is that religiosity is related to\nhigher self-reported well-being?"',
+                      labs = c("Prior\nbeliefs","Final\nbeliefs"),
+                      levels = c("Very\nunlikely","2","3","4","5","6","Very\nlikely"), 
+                      var1 = "EstimationRQ1",
+                      var2 = "AnswerRQ1", 
+                      limits = c(-1,1.2), textsize = 16, text_push = 0.1,
+                      cols = mycols)
+grid.arrange(beliefs_rq1)
+```
+
+```{r percentages-rq2, echo=TRUE}
+# prior beliefs that hypothesis 2 is unlikely 
+sum(table(dat_complete$EstimationRQ2)[1:2])
+sum(table(dat_complete$EstimationRQ2)[1:2])/sum(table(dat_complete$EstimationRQ2))*100
+
+# prior beliefs that hypothesis 2 is likely 
+sum(table(dat_complete$EstimationRQ2)[4:6])
+sum(table(dat_complete$EstimationRQ2)[4:6])/sum(table(dat_complete$EstimationRQ2))*100
+
+# post beliefs that hypothesis 2 is unlikely 
+sum(table(dat_complete$AnswerRQ2)[1:3])
+sum(table(dat_complete$AnswerRQ2)[1:3])/sum(table(dat_complete$AnswerRQ2))*100
+
+# post beliefs that hypothesis 2 is likely 
+sum(table(dat_complete$AnswerRQ2)[5:7])
+sum(table(dat_complete$AnswerRQ2)[5:7])/sum(table(dat_complete$AnswerRQ2))*100
+
+# mean prior beliefs
+mean(dat_complete$EstimationRQ2, na.rm=T)
+# mean post beliefs 
+mean(dat_complete$AnswerRQ2, na.rm=T)
+```
+
+```{r raincloud-rq2, fig.width=9}
+beliefs_rq2 <- raincloud_likert_plot(dat_complete, 
+                      title = '"Does the relation between religiosity and self-reported\nwell-being depend on perceived cultural norms of religion?"',
+                      labs = c("Prior\nbeliefs","Final\nbeliefs"),
+                      levels = c("Very\nunlikely","2","3","4","5","6","Very\nlikely"), 
+                      var1 = "EstimationRQ2",
+                      var2 = "AnswerRQ2", 
+                      limits = c(-1,1.2), textsize = 16, text_push = 0.1,
+                      cols = mycols)
+grid.arrange(beliefs_rq2)
+```
+
+# Analytical Approaches
+
+```{r statistical_approaches}
+x = vars$statisitcal_model
+item_list <- strsplit(x, split = "; ")
+tab_analysis <- table(.capwords(unlist(item_list))) 
+# Note: some teams reported more than one statistical analysis
+tab_df <- as.data.frame(round(sort(tab_analysis/nrow(vars) * 100, decreasing = TRUE), 2))
+tab_df[,2] <- paste0(sort(tab_analysis, decreasing = TRUE), '/120', ' (', tab_df[,2], ' %)')
+colnames(tab_df) <- c('Analytic Approach', 'Percentage of teams')
+```
+
+```{r, echo=TRUE}
+# Total number of different statistical approaches
+length(tab_analysis)
+# Number of Multilevel Linear Regression
+items0 <- .capwords(unlist(item_list))
+items <- items0[grepl('Multilevel Linear Regression', items0)]
+items <- items[!grepl('Multiverse', items)]
+table(items)
+sum(table(items))
+# Percentage of teams
+round(sum(table(items))/nrow(vars) * 100, 2)
+
+# Number of Linear Regression
+items <- items0[grepl('Linear Regression', items0)]
+items <- items[!grepl('Multiverse', items) & !grepl('Multilevel', items) & !grepl('Moderated', items)]
+table(items)
+sum(table(items))
+# Percentage of teams
+round(sum(table(items))/nrow(vars) * 100, 2)
+```
+
+
+```{r statistical_approaches_table}
+apa_table(tab_df, 
+          caption = "Analytic approaches taken by the analysis teams.",
+          note = "Some teams reported multiple statistical approaches.", 
+          landscape = FALSE,
+          font_size = "small")
+```
+
+# Positions and Domains
+
+```{r numberofpeople, echo=TRUE}
+#Number of analysts per team
+round(table(dat_complete$NumberOfPeople)/120*100)
+median(dat_complete$NumberOfPeople)
+```
+
+```{r positions, echo = TRUE}
+dat_complete$Positions <- gsub(",",";", dat_complete$Positions)
+mat_positions <- create_variable_matrix(dat_complete$Positions, colnames = dat_complete$Team)
+# reorder mat based on position
+mat_positions <- mat_positions[c("Doctoral student","Post-doc","Assistant professor","Associate professor","Full professor"),]
+```
+
+```{r domains, echo = TRUE}
+mat_domains <- create_variable_matrix(dat_complete$Domain, colnames = dat_complete$Team)
+# reorder mat based on position
+mat_domains <- mat_domains[c("Religion and Culture", "Methodology and Statistics","Health",
+                             "Social Psychology","Cognition","Psychology (Other)"),]
+```
+
+```{r postions_and_domains}
+mat_positions_domains <- rbind(mat_positions, mat_domains)
+```
+
+```{r positions_tab}
+x = dat_complete$Positions
+item_list <- strsplit(x, split = "; ")
+tab_positions <- table(.capwords(trimws(unlist(item_list)))) 
+tab_df <- as.data.frame(round(sort(tab_positions/nrow(dat_complete) * 100, decreasing = TRUE), 2))
+tab_df[,2] <- paste0(sort(tab_positions, decreasing = TRUE), '/',nrow(dat_complete), ' (', tab_df[,2], ' %)')
+
+x = dat_complete$Domain
+item_list <- strsplit(x, split = "; ")
+tab_domains <- table(trimws(unlist(item_list))) 
+tab_df_2 <- as.data.frame(round(sort(tab_domains/nrow(dat_complete) * 100, decreasing = TRUE), 2))
+tab_df_2[,2] <- paste0(sort(tab_domains, decreasing = TRUE), '/',nrow(dat_complete), ' (', tab_df_2[,2], ' %)')
+
+tab_df <- rbind(tab_df, tab_df_2)
+
+colnames(tab_df) <- c('', 'Percentage of teams')
+```
+
+```{r positions_table}
+apa_table(tab_df, 
+          stub_indents = list(`Positions` = 1:5, `Domains` = 6:11), 
+          caption = "Positions and domains featured in the analysis teams.",
+          note = "Teams may include multiple members of the same position and in the same domain.", 
+          landscape = FALSE,
+          font_size = "small")
+```
+
+
+# Variable Inclusion
+
+Variable names
+rel_1: service_attendance
+rel_2: prayer
+rel_3: religious_status
+rel_4: denomination
+rel_5: belief_God
+rel_6: belief_afterlife
+rel_7: spiritual
+rel_8: norms_lifestyle_self
+rel_9: norms_God_self
+
+cnorm_1: norms_lifestyle_country
+cnorm_2: norms_God_country
+
+Well-being:
+wb_gen_1: quality_life
+wb_gen_2: satisfaction_health
+wb_phys_1: pain
+wb_phys_2: medication
+wb_phys_3: energy
+wb_phys_4: mobility
+wb_phys_5: sleep
+wb_phys_6: activities
+wb_phys_7: work_ability
+wb_psych_1: enjoy_life
+wb_psych_2: meaningfulness
+wb_psych_3: concentration
+wb_psych_4: satisfaction_appearance
+wb_psych_5: self-esteem
+wb_psych_6: negative_affect
+wb_soc_1: relationships
+wb_soc_2: social_support
+wb_soc_3: sexual_satisfaction
+
+wb_overall_mean: mean_overall
+wb_phys_mean: mean_physical
+wb_psych_mean: mean_psychological
+wb_soc_mean: mean_social
+
+# Independent Variable
+
+```{r iv1, echo = TRUE}
+vars <- vars[vars$statisitcal_model!="",] # don't do this?
+mat_iv1 <- create_variable_matrix(vars$iv_rq1, colnames = vars$analysis_team_nr)
+# change variable names 
+rownames(mat_iv1) <- .changenames(rownames(mat_iv1))
+# descriptives: Maximum
+round(sort(rowMeans(mat_iv1), decreasing = TRUE) * 100, 2)
+```
+
+
+```{r iv2, echo = TRUE}
+mat_iv2 <- create_variable_matrix(vars$iv_rq2, colnames = vars$analysis_team_nr)
+# change variable names 
+rownames(mat_iv2) <- .changenames(rownames(mat_iv2))
+# descriptives: Maximum
+round(sort(rowMeans(mat_iv2), decreasing = TRUE) * 100, 2)
+```
+
+```{r iv_plot, fig.height=3, fig.width=7.2}
+butterfly_plot(mat_iv1, mat_iv2)
+```
+
+# Dependent Variable
+```{r dvs, echo = TRUE}
+# how many team did / did not change the dv from rq1 to rq2?
+sum(vars$dv_rq1!=vars$dv_rq2)
+
+# what are those differences? 
+vars$dv_rq1[which(vars$dv_rq1!=vars$dv_rq2)]
+vars$dv_rq2[which(vars$dv_rq1!=vars$dv_rq2)]
+```
+
+```{r dv1, echo = TRUE}
+vars1 <- vars[vars$dv_rq1 != '',]
+mat_dv1   <- create_variable_matrix(vars1$dv_rq1, colnames = vars1$analysis_team_nr)
+mat_dv1   <- mat_dv1[!rownames(mat_dv1) == '',]
+# change variable names 
+rownames(mat_dv1) <- .changenames(rownames(mat_dv1))
+# descriptives: Maximum
+round(sort(rowMeans(mat_dv1), decreasing = TRUE) * 100, 2)
+```
+
+```{r dv2, echo = TRUE}
+vars2 <- vars[vars$dv_rq2 != '',]
+mat_dv2 <- create_variable_matrix(vars2$dv_rq2, colnames = vars2$analysis_team_nr)
+mat_dv2 <- mat_dv2[!rownames(mat_dv2) == '',]
+# change variable names 
+rownames(mat_dv2) <- .changenames(rownames(mat_dv2))
+# descriptives: Maximum
+round(sort(rowMeans(mat_dv2), decreasing = TRUE) * 100, 2)
+```
+
+```{r dv_plot, fig.height=5, fig.width=7.5}
+butterfly_plot(mat_dv1,mat_dv2, xrange=c(0,0.6))
+```
+
+# Covariates
+
+```{r covariate1}
+mat_cov1  <- create_variable_matrix(vars$cov_rq1, 
+                               colnames = vars$analysis_team_nr,
+                               order_percentage = FALSE)
+# change variable names 
+rownames(mat_cov1) <- .changenames(rownames(mat_cov1))
+# descriptives: Maximum
+round(sort(rowMeans(mat_cov1), decreasing = TRUE) * 100, 2)
+```
+
+```{r covariate2}
+vars$cov_rq2 <- gsub(",",";", vars$cov_rq2)
+mat_cov2  <- create_variable_matrix(vars$cov_rq2, 
+                               colnames = vars$analysis_team_nr,
+                               order_percentage = FALSE)
+# change variable names 
+rownames(mat_cov2) <- .changenames(rownames(mat_cov2))
+```
+
+```{r cov_plot, fig.height=5.5, fig.width = 7.5}
+butterfly_plot(mat_cov1, mat_cov2, xrange=c(0,.6))
+```
+
+# Evidence evaluation
+
+```{r plot-es}
+# colors for subjective evidence evaluation
+cols = c('#03A89E', 'grey70', '#CD7F32')
+#cols = RColorBrewer::brewer.pal(8, "Dark2")[c(1,6,2)]
+```
+
+```{r subj_evals, echo=TRUE}
+# plot RQ1 (only betas)
+# format subjective evidence evaluation
+dat_complete$subj_evidence1 <- as.numeric(factor(dat_complete$Evidence1, levels = c("Yes, there is good evidence for a positive relation","No, the evidence is ambiguous", "No, there is good evidence against a positive relation")))
+
+# subjective evidence evaluation: RQ 1 (1=evidence; 2=ambiguous; 3=no evidence)
+round(table(dat_complete$subj_evidence1)/sum(table(dat_complete$subj_evidence1)) * 100, 2)
+
+dat_complete$subj_evidence2 <- as.numeric(factor(dat_complete$Evidence2, levels = c("Yes, there is good evidence for the effect of perceived cultural norms","No, the evidence is ambiguous", "No, there is good evidence against the effect of perceived cultural norms")))
+# subjective evidence evaluation: RQ 2 (1=evidence; 2=ambiguous; 3=no evidence)
+round(table(dat_complete$subj_evidence2)/sum(table(dat_complete$subj_evidence2)) * 100, 2)
+
+#effect sizes RQ1
+table(dat_complete$MARP_ES_type_1)
+
+#effect sizes RQ2
+table(dat_complete$MARP_ES_type_2)
+```
+
+```{r plot_es_1, fig.width=8, fig.height=5}
+plotdat1 <- subset(dat_complete, subset = MARP_ES_type_1 == "beta" & !is.na(Standardized_ES_1))
+# recode the subjective evaluation of the team that miscoded the direction of the effect
+# plotdat1$subj_evidence1[plotdat1$subj_evidence1==3] <- 1
+plotter(effect = plotdat1$Standardized_ES_1,
+        lower = plotdat1$lower_CI_1,
+        upper = plotdat1$upper_CI_1,
+        subj_evidence = plotdat1$subj_evidence1,
+        add_subjective = TRUE,
+        main = "Research Question 1",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+```
+
+```{r pos_betas1, echo=TRUE}
+# Percentage positive effect size estimates
+mean(plotdat1$Standardized_ES_1 > 0)*100
+# Percentage CIs not include zero
+mean(plotdat1$lower_CI_1 <= 0)*100
+
+# Median and MAD of the betas
+median(plotdat1$Standardized_ES_1)
+mad(plotdat1$Standardized_ES_1)
+```
+
+```{r plot1b, fig.width=5, fig.height=4, eval=TRUE}
+plotdat1_cohensd <- subset(dat_complete, subset = MARP_ES_type_1 %in% c("cohen's d","cohen's d "))
+plotter(effect = plotdat1_cohensd$Standardized_ES_1,
+        lower = plotdat1_cohensd$lower_CI_1,
+        upper = plotdat1_cohensd$upper_CI_1,
+        subj_evidence = plotdat1_cohensd$subj_evidence1,
+        add_subjective = T,
+        main = "Research Question 1",
+        ylab = "Standardized Effect Size (Cohen's d)",
+        yrange = c(-.1,.6))
+
+```
+
+```{r plot_es_2, fig.width=8, fig.height=5}
+# plot RQ2
+plotdat2 <- subset(dat_complete, subset = MARP_ES_type_2 %in% c("beta","beta ")&!is.na(Standardized_ES_2))
+plotter(effect = plotdat2$Standardized_ES_2,
+        lower = plotdat2$lower_CI_2,
+        upper = plotdat2$upper_CI_2,
+        subj_evidence = plotdat2$subj_evidence2,
+        add_subjective = T,
+        main = "Research Question 2",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.2,.5))
+```
+
+
+```{r pos_betas2, echo=TRUE}
+# Number positive effect size estimates out of 101
+sum(plotdat2$Standardized_ES_2 > 0) # 97
+# Number of CIs not include zero out of 101
+sum(plotdat2$lower_CI_2 <= 0 & plotdat2$upper_CI_2 > 0)/length(plotdat2$Standardized_ES_2) # 35 out of 101
+sum(plotdat2$upper_CI_2 < 0) # 0 out of 101
+
+# Median and MAD of the betas
+median(plotdat1$Standardized_ES_2, na.rm = T)
+mad(plotdat1$Standardized_ES_2, na.rm = T)
+```
+
+```{r meaningfulness, echo=TRUE}
+# Is the effect relevant?
+relevance1 <- dat_complete$Relevance1
+relevance1[relevance1 == ''] <- NA
+relevance1 <- na.omit(relevance1)
+round(table(relevance1)/sum(table(relevance1)),2)
+
+relevance2 <- dat_complete$Relevance2
+relevance2[relevance2 == ''] <- NA
+relevance2 <- na.omit(relevance2)
+round(table(relevance2)/sum(table(relevance2)),2)
+```
+
+# Teams' Experiences 
+
+## Effort, Frustration and Workload
+
+```{r effort-frustration-time, fig.width=12, fig.height=9}
+dat_experiences$FrustrationS1[dat_experiences$FrustrationS1==2.5] <- 3
+dat_experiences$TimeAnticipatedS1[dat_experiences$TimeAnticipatedS1==3.5] <- 4
+effort_plot <- likert_plot_new(dat = dat_experiences, items = c("EffortS1","EffortS2"), 
+                               title = '"How hard did you have to work to accomplish the task at ..."', 
+                               labs = c('Stage 1 (planning)', 'Stage 2 (executing)'), 
+                               levels = c('Effort was\nvery low', 2:6, 'Effort was\nvery high'), 
+                               yaxis = FALSE, limits = c(-1,1), textsize = 18, text_push = 0.1)
+legend1 <- cowplot::get_legend(effort_plot + theme(legend.position = c(0.5,0.5)))
+frustration_plot <- likert_plot_new(dat = dat_experiences, items = c("FrustrationS1","FrustrationS2"), 
+                               title = '"How frustrated were you (e.g., did you feel insecure,\ndiscouraged, irritated, stressed, or annoyed) at ..."', 
+                               labs = c('Stage 1 (planning)', 'Stage 2 (executing)'), 
+                               levels = c('Frustration\nwas very low', 2:6, 'Frustration\nwas very high'), 
+                               yaxis = FALSE, limits = c(-1,1), textsize = 18, text_push = 0.1)
+legend2 <- cowplot::get_legend(frustration_plot + theme(legend.position = c(0.5,0.5)))
+workload_plot <- likert_plot_new(dat = dat_experiences, items = c("TimeAnticipatedS1","TimeAnticipatedS2"), 
+                               title = '"Did you spend more time than you anticipated for ..."', 
+                               labs = c('Stage 1 (planning)', 'Stage 2 (executing)'), 
+                               levels = c('No, much\nless', 2:4, 'Yes, much\nmore'), 
+                               yaxis = TRUE, limits = c(-1,1), textsize = 18, text_push = 0.1)
+legend3 <- cowplot::get_legend(workload_plot + theme(legend.position = c(0.5,0.55)))
+cowplot::plot_grid(effort_plot, legend1, frustration_plot, legend2, workload_plot,legend3, 
+                   ncol=2,nrow=3, rel_widths = c(1,.2))
+```
+
+How much time did they spend on stage 1 and stage 2?
+Stage 1: median = `r median(dat_complete$HoursS1, na.rm=T)`, range = `r range(dat_complete$HoursS1, na.rm = T)`. 
+Stage 2: median = `r median(dat_complete$HoursS2, na.rm=T)`, range = `r range(dat_complete$HoursS2, na.rm = T)`. 
+
+We could of course run some analyses to see if they thought stage 1 was more or less effortful than stage 2, or more frustrating, or that the workload was more than expected? 
+
+```{r cri}
+cri <- function(samples){
+  q <- quantile(samples, p=c(.025,.975))
+  cri <- paste0("[",printnum(q[1]),", ",printnum(q[2]),"]")
+  return(cri)
+}
+```
+
+```{r beliefs_es_spearman, cache=TRUE}
+# rank-based correlation between beliefs (likert scale) and effect sizes
+#Prebeliefs research question 1 
+rho_prebeliefs_es1 <- spearmanGibbsSampler(xVals = dat_complete$EstimationRQ1,
+                                           yVals = dat_complete$Standardized_ES_1, 
+                                           nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_prebeliefs_es1 <- computeBayesFactorOneZero(rho_prebeliefs_es1, whichTest = "Spearman", oneSided = "right")
+#Postbeliefs research question 1 
+rho_postbeliefs_es1 <- spearmanGibbsSampler(xVals = dat_complete$AnswerRQ1,
+                                           yVals = dat_complete$Standardized_ES_1, 
+                                           nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_postbeliefs_es1 <- computeBayesFactorOneZero(rho_postbeliefs_es1, whichTest = "Spearman", oneSided = "right")
+
+#Prebeliefs research question 2
+rho_prebeliefs_es2 <- spearmanGibbsSampler(xVals = dat_complete$EstimationRQ2,
+                                           yVals = dat_complete$Standardized_ES_2, 
+                                           nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_prebeliefs_es2 <- computeBayesFactorOneZero(rho_prebeliefs_es2, whichTest = "Spearman", oneSided = "right")
+#Postbeliefs research question 2
+rho_postbeliefs_es2 <- spearmanGibbsSampler(xVals = dat_complete$AnswerRQ2,
+                                           yVals = dat_complete$Standardized_ES_2, 
+                                           nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_postbeliefs_es2 <- computeBayesFactorOneZero(rho_postbeliefs_es2, whichTest = "Spearman", oneSided = "right")
+
+#Self-reported expertise RQ1
+rho_methods_es1 <- spearmanGibbsSampler(xVals = dat_complete$MethodsKnowledge,
+                                        yVals = dat_complete$Standardized_ES_1, 
+                                        nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_methods_es1 <- computeBayesFactorOneZero(rho_methods_es1, whichTest = "Spearman", oneSided = FALSE)
+rho_theory_es1 <- spearmanGibbsSampler(xVals = dat_complete$TheoreticalKnowledge,
+                                       yVals = dat_complete$Standardized_ES_1, 
+                                       nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_theory_es1 <- computeBayesFactorOneZero(rho_theory_es1, whichTest = "Spearman", oneSided = FALSE)
+
+#Self-reported expertise RQ2
+rho_methods_es2 <- spearmanGibbsSampler(xVals = dat_complete$MethodsKnowledge,
+                                        yVals = dat_complete$Standardized_ES_2, 
+                                        nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_methods_es2 <- computeBayesFactorOneZero(rho_methods_es2, whichTest = "Spearman", oneSided = FALSE)
+
+rho_theory_es2 <- spearmanGibbsSampler(xVals = dat_complete$TheoreticalKnowledge,
+                                       yVals = dat_complete$Standardized_ES_2, 
+                                       nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_theory_es2 <- computeBayesFactorOneZero(rho_theory_es2, whichTest = "Spearman", oneSided = FALSE)
+
+```
+
+# Correlation subjective beliefs and effect sizes
+
+Following Silberzahn et al. (2018) we explored whether the reported effect sizes were positively related to subjective beliefs about the plausibility of the research question *before* and *after* analyzing the data. As the subjective beliefs were measured on a 7-point Likert scale, we used a rank-based Spearman correlation test with a Uniform[-1, 1] prior [cite Johnny].  
+
+For research question 1, we obtained strong evidence *against* a positive relation between prior beliefs about the plausibility of the research question and the reported effect sizes: BF$_{+0}=$ `r bf_prebeliefs_es1`; BF$_{0+}=$ `r 1/bf_prebeliefs_es1`, $\rho_s=$ `r median(rho_prebeliefs_es1$rhoSamples)`, 95% credible interval `r cri(rho_prebeliefs_es1$rhoSamples)`. In addition, we found moderate evidence against a positive relation between posterior beliefs about the plausibility of the research question and the reported effect sizes: BF$_{+0}=$ `r bf_postbeliefs_es1`; BF$_{0+}=$ `r 1/bf_postbeliefs_es1`, $\rho_s=$ `r median(rho_postbeliefs_es1$rhoSamples)`, 95% credible interval `r cri(rho_postbeliefs_es1$rhoSamples)`. 
+
+For research question 2, we found moderate evidence against a positive relation between prior beliefs about the plausibility of the research question and the reported effect sizes: BF$_{+0}=$ `r bf_prebeliefs_es2`; BF$_{0+}=$ `r 1/bf_prebeliefs_es2`, $\rho=$ `r median(rho_prebeliefs_es2$rhoSamples)`, 95% credible interval `r cri(rho_prebeliefs_es2$rhoSamples)`. For the posterior beliefs, however, we obtained strong evidence in favor of a positive relation between posterior beliefs about the plausibility of the research question and the reported effect sizes: BF$_{+0}=$ `r bf_postbeliefs_es2`, $\rho=$ `r median(rho_postbeliefs_es2$rhoSamples)`, 95% credible interval `r cri(rho_postbeliefs_es2$rhoSamples)`. 
+
+These results regarding the prior beliefs suggest no indication that expectations and confirmation bias influenced the teams' results. For the posterior beliefs, on the other hand, it seems that the teams updated their beliefs about the plausibility of research question 2 based on the results of their analyses. Note that this updating of beliefs may not have happened for research question 1 because prior beliefs about research question 1 were already in line with the outcomes, i.e., most teams expected and reported evidence for a positive relation between religiosity and well-being. 
+
+# Change in belief? 
+```{r change_es_spearman, cache=TRUE}
+#is the change in belief related to the reported effect size?
+belief_change_es1 <- dat_complete$AnswerRQ1 - dat_complete$EstimationRQ1
+belief_change_es2 <- dat_complete$AnswerRQ2 - dat_complete$EstimationRQ2
+
+#belief change research question 1 
+rho_beliefchange_es1 <- spearmanGibbsSampler(xVals = belief_change_es1,
+                                             yVals = dat_complete$Standardized_ES_1, 
+                                             nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_beliefchange_es1 <- computeBayesFactorOneZero(rho_beliefchange_es1, whichTest = "Spearman", oneSided = "right")
+
+#belief change research question 2 
+rho_beliefchange_es2 <- spearmanGibbsSampler(xVals = belief_change_es2,
+                                             yVals = dat_complete$Standardized_ES_2, 
+                                             nSamples = 3300, nChains = 2, nBurnin = 300)
+bf_beliefchange_es2 <- computeBayesFactorOneZero(rho_beliefchange_es2, whichTest = "Spearman", oneSided = "right")
+
+```
+
+To further investigate the belief updating, we assessed the correlation between the reported effect sizes and the the change in belief, i.e., the difference between posterior and prior beliefs for both research questions. For research question 1, there was basically no evidence for or against a positive relation between effect size and change in belief: BF$_{+0}=$ `r bf_beliefchange_es1`, $\rho=$ `r median(rho_beliefchange_es1$rhoSamples)`, 95% credible interval `r cri(rho_beliefchange_es1$rhoSamples)`. For research question 2, on the other hand, we obtained strong evidence that effect sizes were positively related to change in subjective belief about the plausibility of the hypothesis:  BF$_{+0}=$ `r bf_beliefchange_es2`, $\rho=$ `r median(rho_beliefchange_es2$rhoSamples)`, 95% credible interval `r cri(rho_beliefchange_es2$rhoSamples)`. 
+
+```{r correlation-beliefs, fig.width=15, fig.height=12}
+p1 <- correlation_plot(x=dat_complete$EstimationRQ1, y=dat_complete$Standardized_ES_1, 
+                 subj_eval = dat_complete$subj_evidence1, yrange=c(-.1,.4),
+                 xlab = "Prior beliefs", ylab = "Standardized effect size", 
+                 title = "Research question 1")
+p2 <- correlation_plot(x=dat_complete$AnswerRQ1, y=dat_complete$Standardized_ES_1, 
+                 subj_eval = dat_complete$subj_evidence1, yrange=c(-.2,.4),
+                 xlab = "Final beliefs", ylab = "Standardized effect size", 
+                 title = "Research question 1")
+p3 <- correlation_plot(x=dat_complete$EstimationRQ2, y=dat_complete$Standardized_ES_2, 
+                 subj_eval = dat_complete$subj_evidence2, yrange=c(-.1,.3),
+                 xlab = "Prior beliefs", ylab = "Standardized effect size",
+                 title = "Research question 2")
+p4 <- correlation_plot(x=dat_complete$AnswerRQ2, y=dat_complete$Standardized_ES_2, 
+                 subj_eval = dat_complete$subj_evidence2, yrange=c(-.1,.3),
+                 xlab = "Final beliefs", ylab = "Standardized effect size",
+                 title = "Research question 2")
+ggpubr::ggarrange(p1,p2,p3,p4, ncol = 2, nrow = 2, labels = c("A.","B.","C.","D."), font.label = list(size = 18))
+```
+
+
+Finally, we assessed whether reported effect sizes were related to self-reported expertise; for research question 1, we found evidence against a correlation between effect sizes and methodological knowledge (BF$_{10}=$ `r bf_methods_es1`; BF$_{01}=$ `r 1/bf_methods_es1`, $\rho=$ `r median(rho_methods_es1$rhoSamples)`, 95% credible interval `r cri(rho_methods_es1$rhoSamples)`) and between effect sizes and theoretical knowledge (BF$_{10}=$ `r bf_theory_es1`; BF$_{01}=$ `r 1/bf_theory_es1`, $\rho=$ `r median(rho_theory_es1$rhoSamples)`, 95% credible interval `r cri(rho_theory_es1$rhoSamples)`). For research question 2, we again obtained evidence against a relation between effect sizes and methodological knowledge (BF$_{10}=$ `r bf_methods_es2`; BF$_{01}=$ `r 1/bf_methods_es2`, $\rho=$ `r median(rho_methods_es2$rhoSamples)`, 95% credible interval `r cri(rho_methods_es2$rhoSamples)`) and between effect sizes and theoretical knowledge (BF$_{10}=$ `r bf_theory_es2`; BF$_{01}=$ `r 1/bf_theory_es2`, $\rho=$ `r median(rho_theory_es2$rhoSamples)`, 95% credible interval `r cri(rho_theory_es2$rhoSamples)`).
+
+```{r correlation-knowledge, fig.width=15, fig.height=12}
+p1 <- correlation_plot(x=dat_complete$MethodsKnowledge, y=dat_complete$Standardized_ES_1, 
+                 subj_eval = dat_complete$subj_evidence1, yrange=c(-.1,.4),
+                 xlab = "Methodological knowledge", ylab = "Standardized effect size",
+                 xlabels = c("No\nknowledge","Expert"), xlevels = 5, 
+                 title = "Research question 1")
+p2 <- correlation_plot(x=dat_complete$TheoreticalKnowledge, y=dat_complete$Standardized_ES_1, 
+                 subj_eval = dat_complete$subj_evidence1, yrange=c(-.1,.4),
+                 xlab = "Theoretical knowledge", ylab = "Standardized effect size",
+                 xlabels = c("No\nknowledge","Expert"), xlevels = 5, 
+                 title = "Research question 1")
+p3 <- correlation_plot(x=dat_complete$MethodsKnowledge, y=dat_complete$Standardized_ES_2, 
+                 subj_eval = dat_complete$subj_evidence2, yrange=c(-.1,.3),
+                 xlab = "Methodological knowledge", ylab = "Standardized effect size",
+                 xlabels = c("No\nknowledge","Expert"), xlevels = 5, 
+                 title = "Research question 2")
+p4 <- correlation_plot(x=dat_complete$TheoreticalKnowledge, y=dat_complete$Standardized_ES_2, 
+                 subj_eval = dat_complete$subj_evidence2, yrange=c(-.1,.3),
+                 xlab = "Theoretical knowledge", ylab = "Standardized effect size",
+                 xlabels = c("No\nknowledge","Expert"), xlevels = 5, 
+                 title = "Research question 2")
+
+ggpubr::ggarrange(p1,p2,p3,p4, ncol = 2, nrow = 2, labels = c("A.","B.","C.","D."), font.label = list(size = 18))
+```
+
+## Data analysis
+We used `r cite_r("r-references.bib")` for all our analyses.
+
+\newpage
+
+# References
+
+\begingroup
+\setlength{\parindent}{-0.5in}
+\setlength{\leftskip}{0.5in}
+
+<div id="refs" custom-style="Bibliography"></div>
+\endgroup
+
+# Appendix 
+
+## Additional effect sizes
+
+```{r additional-es, fig.height=7, fig.width=10}
+dat_ad <- read.csv2("data/additional_effectsizes.csv", header=TRUE)
+dat_ad[,1:12] <- sapply(dat_ad[,1:12],as.numeric)
+
+par(mfrow = c(2, 3))
+
+ad1 <- subset(dat_ad, subset = type == "beta" & rq==1)
+p1 <- plotter(effect = ad1$psy_es,
+        lower = ad1$psy_low,
+        upper = ad1$psy_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 1\nPsychological Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+p2 <- plotter(effect = ad1$soc_es,
+        lower = ad1$soc_low,
+        upper = ad1$soc_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 1\nSocial Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+p3 <- plotter(effect = ad1$phy_es,
+        lower = ad1$phy_low,
+        upper = ad1$phy_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 1\nPhysical Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+ad2 <- subset(dat_ad, subset = type == "beta" & rq==2)
+p4 <- plotter(effect = ad2$psy_es,
+        lower = ad2$psy_low,
+        upper = ad2$psy_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 2\nPsychological Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+p5 <- plotter(effect = ad2$soc_es,
+        lower = ad2$soc_low,
+        upper = ad2$soc_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 2\nSocial Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+p6 <- plotter(effect = ad2$phy_es,
+        lower = ad2$phy_low,
+        upper = ad2$phy_up,
+        subj_evidence = NULL,
+        add_subjective = FALSE,
+        main = "Research Question 2\nPhysical Well-being",
+        ylab = "Standardized Effect Size (Beta)",
+        yrange = c(-.1,.5))
+
+```
+
+
+## Dependent Variable Research Question 1
+
+```{r dv1_tab}
+tabs <- create_long_table(x = mat_dv1, 
+                      note = NULL,
+                       caption = "Items Included as Dependent Variables for Research Question 1 by Each Team.")
+tabs[[1]]
+```
+
+## Dependent Variable Research Question 2
+
+```{r dv2_tab}
+tabs <- create_long_table(x = mat_dv2, 
+                      note = NULL,
+                      caption = "Items Included as Dependent Variables for Research Question 2 by Each Team.")
+tabs[[1]]
+```
+
+## Independent Variable Research Question 1 
+
+
+```{r iv1_tab}
+tabs <- create_long_table(x = mat_iv1, 
+                      note = "Not all teams are coded yet.",
+                      caption = "Items Included as Independent Variables for Research Question 1 by Each Team.")
+
+tabs[[1]]
+```
+
+## Independent Variable Research Question 2
+
+
+```{r iv2_tab}
+tabs <- create_long_table(x = mat_iv2, 
+                      note = "Variables indicated as 'External' refer to variables that are based on data not provided by the MARP team.",
+                      caption = "Items Included as Independent Variables for Research Question 2 by Each Team.")
+tabs[[1]]
+```
+
+## Covariates Research Question 1 
+
+```{r covariate1_tab}
+tabs <- create_long_table(x = mat_cov1, 
+                      note = "Variables indicated as 'External' refer to covariates that are based on data not provided by the MARP team.",
+                      caption = "Covariates Included for Research Question 1 by Each Team.")
+
+tabs[[1]]
+```
+
+## Covariates Research Question 2
+
+```{r covariate2_tab}
+tabs <- create_long_table(x = mat_cov2, 
+                      note = "Variables indicated as 'External' refer to covariates that are based on data not provided by the MARP team.",
+                      caption = "Covariates Included for Research Question 2 by Each Team.")
+
+tabs[[1]]
+```
